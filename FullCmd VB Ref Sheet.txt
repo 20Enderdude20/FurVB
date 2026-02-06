@@ -1,0 +1,6 @@
+10xx (Set Waveform)	-> 0x40 (PSG waveform (b) )
+11xx (Set Noise Length)	-> 0x3f (PSG noise mode/duty/whatever (b) )
+12xx (Setup Envelope)	-> 0x3e (PSG noise freq (b) ) ?
+13xx (Setup Sweep)	-> 0x41 (GB sweep time (b) )
+14xx (Setup Mod.)	-> 0x5a (FDS mod depth (b) )
+15xx (Set Mod. Wave)	-> 0x5e (FDS mod waveform (b) )
