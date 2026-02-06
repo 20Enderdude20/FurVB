@@ -171,6 +171,22 @@ bool CmdStop(uint8_t chan, const uint8_t* param) {
 	return true;
 };
 
+bool CmdPIns(uint8_t chan, const uint8_t* param) {
+	return false;
+};
+
+bool CmdPVol(uint8_t chan, const uint8_t* param) {
+	return false;
+};
+
+bool CmdSpeedDial(uint8_t chan, const uint8_t* param) {
+	return false;
+};
+
+bool CmdPDelay(uint8_t chan, const uint8_t* param) {
+	return false;
+};
+
 CommandFunc CmdDispatch[] = {
 	CmdEvalNote, CmdSetIns, NULL, NULL, NULL, NULL, 
 	NULL, NULL, NULL, CmdPrePorta, CmdArpSpeed, CmdVibrato, 
@@ -178,7 +194,13 @@ CommandFunc CmdDispatch[] = {
 	CmdPorta, CmdLegato, CmdVolSlideWT, CmdTremolo, CmdPanbrello, CmdPanSlide, 
 	CmdPanning, NULL, NULL, NULL, NULL, NULL, 
 	CmdCall32, CmdOffWait, CmdFull, CmdCall16, CmdReturn, CmdJump, 
-	CmdTickRate, CmdWait16, CmdWait8, CmdWait, CmdStop
+	CmdTickRate, CmdWait16, CmdWait8, CmdWait, CmdStop,
+	CmdPIns, CmdPIns, CmdPIns, CmdPIns, CmdPIns, CmdPIns,
+	CmdPVol, CmdPVol, CmdPVol, CmdPVol, CmdPVol, CmdPVol,
+	CmdSpeedDial, CmdSpeedDial, CmdSpeedDial, CmdSpeedDial, CmdPDelay, CmdPDelay,
+	CmdPDelay, CmdPDelay, CmdPDelay, CmdPDelay, CmdPDelay, CmdPDelay, 
+	CmdPDelay, CmdPDelay, CmdPDelay, CmdPDelay, CmdPDelay, CmdPDelay, 
+	CmdPDelay, CmdPDelay
 };
 
 

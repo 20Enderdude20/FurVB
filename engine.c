@@ -50,10 +50,12 @@ void ParseChannelStream(uint8_t ch, const uint8_t* binfile) {
 		uint8_t command_b = binfile[tmp_ptr];
 		uint8_t DispatchIndex = (command_b <= 0xb7) ? 0x0 : (command_b - 0xb7);
 		AreWeDone = CmdDispatch[DispatchIndex](ch, &binfile[tmp_ptr]);
-		if (command_b != 0xd7)
-			PCInc = CmdLengths[DispatchIndex];
-		else
+		if (command_b == 0xd7)
+			PCInc = 1 + FullCmdLengths[binfile[tmp_ptr + 1] - CMD_FULL_DISPATCH_OFFSET];
+		else if (command_b >= 0xec && command_b <= 0xef)
 			PCInc = FullCmdLengths[binfile[tmp_ptr + 1] - CMD_FULL_DISPATCH_OFFSET];
+		else
+			PCInc = CmdLengths[DispatchIndex];
 		ChDataReg[ch]->PC += PCInc;
 	}
 }
