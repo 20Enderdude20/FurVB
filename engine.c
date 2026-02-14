@@ -4,6 +4,7 @@
 #include "engine.h"
 #include "commands.h"
 #include "posteval.h"
+#include "hroutines.h"
 
 bool LinearPitch = 1;
 
@@ -44,12 +45,11 @@ void InitCommandStream(const uint8_t* binfile) {
 		ChannelState_Init(ChState[i]); // Poor man's constructor
 	};
 
-	FCSEngineStatus = 0b01;
+	FCSEngineStatus = 1;
 	return;
 }
 
 void ParseChannelStream(uint8_t ch, const uint8_t* binfile) {
-	uint16_t ushort_param = 0;
 	uint8_t PCInc = 1;
 	bool AreWeDone = false;
 	while (AreWeDone == false && ((FCSEngineStatus & 2) == 0)) {
@@ -68,19 +68,36 @@ void ParseChannelStream(uint8_t ch, const uint8_t* binfile) {
 }
 
 void ReadCommandStreams(const uint8_t* binfile) {
+	if (FCSEngineStatus & 2)
+		return;
 	for (uint8_t i = 0; i < 6; i++)
-		ParseChannelStream(i, binfile);
-	for (uint8_t i = 0; i < 6; i++)
+		if (ChState[i]->wait > 0)
+			ChState[i]->wait--;
+		else
+			ParseChannelStream(i, binfile);
+	for (uint8_t i = 0; i < 6; i++){
 		FCSChannelPost(i);
+	}
 	return;
 }
 
 
 int main() {
-	//setup engine
+	short x = 0;
+	// hardware init
+	Reset();
+	// Set VSU params for furnace default instrument
+	InitVSUIns();
+	// setup engine
 	InitCommandStream(SongStream);
+	while (true) // keep spinning
+		x += 1;
 }
 void timer_interrupt() {
+	DISABLE_IRQS();
+	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR; // disable timer & acknowledge
+	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // re-enable
 	ReadCommandStreams(SongStream);
+	ENABLE_IRQS();
 }
 	

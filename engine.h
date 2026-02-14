@@ -17,6 +17,7 @@ typedef struct {
 typedef struct {
 	short note, oldNote, lastIns, pitch, portaSpeed, portaNote;
 	short volume, volSpeed, volSpeedTarget, cut, volCut, legatoDelay, legatoTarget, rowDelay, volMax;
+	unsigned short wait;
 	char delayOrder, delayRow, retrigSpeed, retrigTick;
 	short vibratoDepth, vibratoRate, vibratoPos, vibratoShape, vibratoFine;
 	short tremoloDepth, tremoloRate, tremoloPos;
@@ -27,6 +28,7 @@ typedef struct {
 	bool wentThroughNote, goneThroughNote;
 } ChannelState;
 void ChannelState_Init(ChannelState* ch_s) {
+	ch_s->wait = 0;
 	ch_s->note = -1;
 	ch_s->oldNote = -1;
 	ch_s->lastIns = -1;

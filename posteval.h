@@ -2,11 +2,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "tables.h"
+#include "special.h"
+#include "vbdefines.h"
 
 extern bool FCSPtrSize;
 extern bool LinearPitch;
 extern ChannelDataRegisters* ChDataReg[6];
 extern ChannelState* ChState[6];
+
 
 uint16_t GetNoteRegVal(uint8_t note, uint16_t* N_Tbl, const uint8_t* O_Tbl, const uint8_t* S_Tbl) {
 	uint8_t octaveshift = O_Tbl[(note >> 2)];
@@ -38,10 +41,7 @@ uint16_t LinearFreqInterpolate(uint16_t basenote, char pitch1, char pitch2, uint
 		nupper = GetNoteRegVal((nbase >> 7) + 1, N_Tbl, OctaveTable, SubTable);
 		rdelta = regval - nupper; // divider values at this point in func: lower note is higher value, and positive delta is desired
 
-		asm("mpyhw %2, %0"	//rdelta *= factor 
-			: "+r" (rdelta)
-			: "r" (rdelta), "r" (factor)
-		);
+		rdelta = Mpyhw(factor, rdelta); //rdelta *= factor 
 
 		rdelta >>= 7; //rdelta /= 128
 	}
@@ -96,12 +96,9 @@ short GetVibVal(uint8_t chan) {
 			tmp = ((pos & 0x3f) < 0x20) ? tmp : -tmp;
 			break;
 	}
-	if (ChState[chan]->vibratoFine != 0xf){
+	if (ChState[chan]->vibratoFine != 0xf){ // 0xf -> +- (0xf + 1) >> 4 semitone range is what tables are normalized to (default)
 		tmp2 = ChState[chan]->vibratoFine + 1;
-		asm("mpyhw %2, %0"	//rdelta *= factor 
-			: "+r" (tmp)
-			: "r" (tmp), "r" (tmp2)
-		);
+		tmp = Mpyhw(tmp2, tmp); // tmp *= tmp2
 
 		tmp = tmp >> 4;
 	}
@@ -110,9 +107,11 @@ short GetVibVal(uint8_t chan) {
 }
 
 void FCSChannelPost(uint8_t chan) {
+	volatile uint8_t *ChanRegBase = (volatile uint8_t*)(VSU_S1INT + (chan << 6));
+	uint8_t tmp;
 	// Volume first
 	if (ChState[chan]->volSpeed != 0) {
-		uint16_t vol = ChState[chan]->volume + ChState[chan]->volSpeed;
+		int16_t vol = ChState[chan]->volume + ChState[chan]->volSpeed;
 		if (ChState[chan]->volSpeedTarget != -1) {
 			if ((vol >= ChState[chan]->volSpeedTarget) && (ChState[chan]->volSpeed > 0)
 				|| (vol <= ChState[chan]->volSpeedTarget) && (ChState[chan]->volSpeed < 0)) {
@@ -128,22 +127,27 @@ void FCSChannelPost(uint8_t chan) {
 
 		ChState[chan]->volume = vol;
 	}
+	// Write to volume register
+	ChanRegBase[o_S1EV0] = (ChanRegBase[o_S1EV0] & 0xf) | ((ChState[chan]->volume >> 4) & 0xf0);
+
 	// Pitch next
 	uint16_t regvalue;
 
 	if (ChState[chan]->vibratoDepth != 0) {
 		ChState[chan]->vibratoPos = ChState[chan]->vibratoPos + ChState[chan]->vibratoRate & 0x3f;
-
-
-
 	}
 
 	if (LinearPitch)
-		regvalue = LinearFreqInterpolate(ChState[chan]->note, ChState[chan]->pitch, GetVibVal(chan), 0, false,
-			NoteTable);
-	else
-			regvalue = 2048 - (GetNoteRegVal(ChState[chan]->note, NoteTable, OctaveTable, SubTable) 
-					   - ChState[chan]->pitch - GetVibVal(chan));
+		regvalue = LinearFreqInterpolate(ChState[chan]->note, ChState[chan]->pitch, GetVibVal(chan), 0, false, NoteTable);
+	else {
+		regvalue = GetNoteRegVal(ChState[chan]->note, NoteTable, OctaveTable, SubTable) + ChState[chan]->pitch + GetVibVal(chan);
+		regvalue = ((short)regvalue < 0) ? 0 : regvalue;
+		regvalue = ((short)regvalue > 2047) ? 1 : 2048 - regvalue;
+	}
+	// Write to frequency registers
+	ChanRegBase[o_S1FQL] = (uint8_t)(regvalue & 0xff);
+	ChanRegBase[o_S1FQH] = (uint8_t)((regvalue >> 8) & 0x07);
+
 	return;
 };
 
