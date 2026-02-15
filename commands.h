@@ -12,8 +12,8 @@ extern const uint8_t* PresetDelay;
 extern const uint8_t* PresetVolume;
 extern const uint8_t* SpeedDialCMD;
 
-extern ChannelDataRegisters* ChDataReg[];
-extern ChannelState* ChState[];
+extern ChannelDataRegisters ChDataReg[];
+extern ChannelState ChState[];
 
 typedef bool (*CommandFunc)(uint8_t chan, const uint8_t* param);
 
@@ -58,16 +58,16 @@ const uint8_t FullCmdLengths[] = { // Starting at full command 0x3e
 };
 // Normal commands
 bool CmdEvalNote(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->oldNote = ChState[chan]->note;
-	ChState[chan]->note = param[0];
-	ChState[chan]->keyOn = true;
-	ChState[chan]->keyOff = false;
+	ChState[chan].oldNote = ChState[chan].note;
+	ChState[chan].note = param[0];
+	ChState[chan].keyOn = true;
+	ChState[chan].keyOff = false;
 	return false; // Boolean tells us if the loop these are used in should be done yet
 };
 
 bool CmdNoteOff(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->keyOn = false;
-	ChState[chan]->keyOff = true;
+	ChState[chan].keyOn = false;
+	ChState[chan].keyOff = true;
 	return false;
 };
 
@@ -112,7 +112,7 @@ bool CmdArpeggio(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdVolume(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->volume = param[1] << 8;
+	ChState[chan].volume = param[1] << 8;
 	return false;
 };
 
@@ -149,15 +149,15 @@ bool CmdPanning(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdCall32(uint8_t chan, const uint8_t* param) {
-	ChDataReg[chan]->ChannelStackPtr += 1;
-	ChDataReg[chan]->ChannelDataStack[ChDataReg[chan]->ChannelStackPtr] = ChDataReg[chan]->PC + 5; // size of call32 is 5
-	ChDataReg[chan]->PC = param[1] | (param[2] << 8) | (param[3] << 16) | (param[4] << 24);
+	ChDataReg[chan].ChannelStackPtr += 1;
+	ChDataReg[chan].ChannelDataStack[ChDataReg[chan].ChannelStackPtr] = ChDataReg[chan].PC + 5; // size of call32 is 5
+	ChDataReg[chan].PC = param[1] | (param[2] << 8) | (param[3] << 16) | (param[4] << 24);
 	return false;
 };
 
 bool CmdOffWait(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->keyOn = false;
-	ChState[chan]->keyOff = true;
+	ChState[chan].keyOn = false;
+	ChState[chan].keyOff = true;
 	return true;
 };
 
@@ -166,23 +166,23 @@ bool CmdFull(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdCall16(uint8_t chan, const uint8_t* param) {
-	ChDataReg[chan]->ChannelStackPtr += 1;
-	ChDataReg[chan]->ChannelDataStack[ChDataReg[chan]->ChannelStackPtr] = ChDataReg[chan]->PC + 3; // size of call16 is 3
-	ChDataReg[chan]->PC = param[1] | (param[2] << 8);
+	ChDataReg[chan].ChannelStackPtr += 1;
+	ChDataReg[chan].ChannelDataStack[ChDataReg[chan].ChannelStackPtr] = ChDataReg[chan].PC + 3; // size of call16 is 3
+	ChDataReg[chan].PC = param[1] | (param[2] << 8);
 	return false;
 };
 
 bool CmdReturn(uint8_t chan, const uint8_t* param) {
-	ChDataReg[chan]->PC = ChDataReg[chan]->ChannelDataStack[ChDataReg[chan]->ChannelStackPtr];
-	ChDataReg[chan]->ChannelStackPtr -= 1;
+	ChDataReg[chan].PC = ChDataReg[chan].ChannelDataStack[ChDataReg[chan].ChannelStackPtr];
+	ChDataReg[chan].ChannelStackPtr -= 1;
 	return false;
 };
 
 bool CmdJump(uint8_t chan, const uint8_t* param) {
 	if (FCSPtrSize) // 32-bit jump
-		ChDataReg[chan]->PC = param[1] | (param[2] << 8) | (param[3] << 16) | (param[4] << 24);
+		ChDataReg[chan].PC = param[1] | (param[2] << 8) | (param[3] << 16) | (param[4] << 24);
 	else // 16-bit jump
-		ChDataReg[chan]->PC = param[1] | (param[2] << 8);
+		ChDataReg[chan].PC = param[1] | (param[2] << 8);
 	return false;
 };
 
@@ -191,17 +191,17 @@ bool CmdTickRate(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdWait16(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->wait = param[1] | (param[2] << 8);
+	ChState[chan].wait = param[1] | (param[2] << 8);
 	return true;
 };
 
 bool CmdWait8(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->wait = param[1];
+	ChState[chan].wait = param[1];
 	return true;
 };
 
 bool CmdWait(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->wait = 1;
+	ChState[chan].wait = 1;
 	return true;
 };
 
@@ -216,16 +216,16 @@ bool CmdPIns(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPVol(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->volume = PresetVolume[param[0] - 0xe6];
+	ChState[chan].volume = PresetVolume[param[0] - 0xe6] << 8;
 	return false;
 };
 
 bool CmdSpeedDial(uint8_t chan, const uint8_t* param) {
-	return CmdFullDispatch[PresetVolume[param[0] - 0xec] - CMD_FULL_DISPATCH_OFFSET](chan, param);
+	return CmdFullDispatch[SpeedDialCMD[param[0] - 0xec] - CMD_FULL_DISPATCH_OFFSET](chan, param);
 };
 
 bool CmdPDelay(uint8_t chan, const uint8_t* param) {
-	ChState[chan]->wait = PresetDelay[param[0] - 0xf0];
+	ChState[chan].wait = PresetDelay[param[0] - 0xf0];
 	return true;
 };
 

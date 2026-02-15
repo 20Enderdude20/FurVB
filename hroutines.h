@@ -3,62 +3,7 @@
 
 #define TIMER_20u_50Hz 0x3e7
 #define TIMER_100u_50Hz 0xc7
-
-
-void Reset() {
-	*(volatile uint8_t*)(VSU_SSTOP) = 1; // Early mute
-	for (uint16_t i = 0xffff; i != 0; i--) {
-		// Spinning for WRAM to warm up
-	}
-	for (uint32_t i = VSU; i < VSU_END; i+=2) // VSU RAM init
-		*(volatile uint16_t*)(i) = 0;
-
-	for (uint32_t i = WRAM; i < WRAM_END; i += 2) // WRAM init
-		*(volatile uint16_t*)(i) = 0;
-
-	for (uint32_t i = VIP; i < VIP_END; i += 2) // VIP RAM init
-		*(volatile uint16_t*)(i) = 0;
-
-	*(volatile uint8_t*)(FRMCYC) = 0; // 0 frame delay
-
-	uint32_t tmp1 = 0x3DC00;
-	uint32_t tmp2 = tmp1 + 510;
-	for (uint8_t i = 0x80; i != 0; i--) { // Column tables (based off of GuyPerfect's routine in assembly)
-		*(volatile uint16_t*)(tmp1) = (uint8_t)ColumnTableData[0x80 - i]; // Start of table, up
-		*(volatile uint16_t*)(tmp1 + 512) = (uint8_t)ColumnTableData[0x80 - i];
-		*(volatile uint16_t*)(tmp2) = (uint8_t)ColumnTableData[0x80 - i]; // End of table, down
-		*(volatile uint16_t*)(tmp2 + 512) = (uint8_t)ColumnTableData[0x80 - i];
-		tmp1 += 2;
-		tmp2 -= 2;
-	}
-
-	// Turn on display
-
-	*(volatile uint16_t*)(XPCTRL) = XP_XPEN | XP_XPRST;
-	*(volatile uint16_t*)(DPCTRL) = DP_SYNCE | DP_RE | DP_DISP;
-
-	// No palette to set for now...
-
-	// Wait state
-
-	*(volatile uint8_t*)(WCR) = 0b11;
-
-	// Acknowledge pending IRQs
-
-	*(volatile uint8_t*)(INTCLR) = *(volatile uint8_t*)(INTPND);
-
-	*(volatile uint8_t*)(INTENB) = 0; // Disable all VIP IRQs
-
-	ENABLE_IRQS();
-
-	// Setup the timer
-
-	*(volatile uint8_t*)(TIMER_TLR) = TIMER_100u_50Hz & 0xff;
-	*(volatile uint8_t*)(TIMER_THR) = TIMER_100u_50Hz >> 8;
-	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // 100 us
-
-	return;
-}
+extern int main();
 
 void InitVSUIns() {
 	*(volatile uint8_t*)(VSU_SSTOP) = 1;
@@ -129,7 +74,7 @@ void InitVSUIns() {
 	Wave0Base[0x1e << 2] = tmp;
 	tmp >>= 8;
 	Wave0Base[0x1f << 2] = tmp;
-	
+
 
 	for (uint8_t chan = 0; chan < 6; chan++) { // Per-channel setup
 		volatile uint8_t* ChanRegBase = (volatile uint8_t*)(VSU_S1INT + (chan << 6));
@@ -142,3 +87,62 @@ void InitVSUIns() {
 
 
 }
+
+void Reset() {
+	*(volatile uint8_t*)(VSU_SSTOP) = 1; // Early mute
+	for (uint16_t i = 0xffff; i != 0; i--) {
+		// Spinning for WRAM to warm up
+	}
+	for (uint32_t i = VSU; i < VSU_END; i+=2) // VSU RAM init
+		*(volatile uint16_t*)(i) = 0;
+
+	for (uint32_t i = WRAM; i < WRAM_END; i += 2) // WRAM init
+		*(volatile uint16_t*)(i) = 0;
+
+	for (uint32_t i = VIP; i < VIP_END; i += 2) // VIP RAM init
+		*(volatile uint16_t*)(i) = 0;
+
+	*(volatile uint8_t*)(FRMCYC) = 0; // 0 frame delay
+
+	uint32_t tmp1 = 0x3DC00;
+	uint32_t tmp2 = tmp1 + 510;
+	for (uint8_t i = 0x80; i != 0; i--) { // Column tables (based off of GuyPerfect's routine in assembly)
+		*(volatile uint16_t*)(tmp1) = (uint8_t)ColumnTableData[0x80 - i]; // Start of table, up
+		*(volatile uint16_t*)(tmp1 + 512) = (uint8_t)ColumnTableData[0x80 - i];
+		*(volatile uint16_t*)(tmp2) = (uint8_t)ColumnTableData[0x80 - i]; // End of table, down
+		*(volatile uint16_t*)(tmp2 + 512) = (uint8_t)ColumnTableData[0x80 - i];
+		tmp1 += 2;
+		tmp2 -= 2;
+	}
+
+	// Turn on display
+
+	*(volatile uint16_t*)(XPCTRL) = XP_XPEN | XP_XPRST;
+	*(volatile uint16_t*)(DPCTRL) = DP_SYNCE | DP_RE | DP_DISP;
+
+	// No palette to set for now...
+
+	// Wait state
+
+	*(volatile uint8_t*)(WCR) = 0b11;
+
+	// Acknowledge pending IRQs
+
+	*(volatile uint8_t*)(INTCLR) = *(volatile uint8_t*)(INTPND);
+
+	*(volatile uint8_t*)(INTENB) = 0; // Disable all VIP IRQs
+
+	ENABLE_IRQS();
+	__asm__("ldsr r0, psw");
+
+	InitVSUIns(); // set VSU WRAM and registers for furnace default state
+
+	// Setup the timer
+
+	*(volatile uint8_t*)(TIMER_TLR) = TIMER_100u_50Hz & 0xff;
+	*(volatile uint8_t*)(TIMER_THR) = TIMER_100u_50Hz >> 8;
+	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // 100 us
+	main();
+	return;
+}
+

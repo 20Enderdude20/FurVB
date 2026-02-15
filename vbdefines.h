@@ -1,5 +1,3 @@
-// bare-metal functions
-// we finally get to write to the registers
 
 #define BG_MAP 0x00020000
 #define BRTA 0x0005F824

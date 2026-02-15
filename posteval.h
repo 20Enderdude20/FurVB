@@ -7,8 +7,8 @@
 
 extern bool FCSPtrSize;
 extern bool LinearPitch;
-extern ChannelDataRegisters* ChDataReg[6];
-extern ChannelState* ChState[6];
+extern ChannelDataRegisters ChDataReg[];
+extern ChannelState ChState[];
 
 
 uint16_t GetNoteRegVal(uint8_t note, uint16_t* N_Tbl, const uint8_t* O_Tbl, const uint8_t* S_Tbl) {
@@ -53,13 +53,13 @@ uint16_t LinearFreqInterpolate(uint16_t basenote, char pitch1, char pitch2, uint
 
 };
 short GetVibVal(uint8_t chan) {
-	uint8_t pos = ChState[chan]->vibratoPos;
-	uint8_t depth = ChState[chan]->vibratoDepth;
+	uint8_t pos = ChState[chan].vibratoPos;
+	uint8_t depth = ChState[chan].vibratoDepth;
 	short tmp = 0;
 	short tmp2 = 0;
 	if (depth == 0)
 		return 0;
-	switch (ChState[chan]->vibratoShape) {
+	switch (ChState[chan].vibratoShape) {
 		case 0:
 			tmp = ((pos & 0x1f) < 0x10) ? VibTable[depth][pos & 0x0f] : VibTable[depth][0xf - (pos & 0xf)];
 			tmp = ((pos & 0x3f) < 0x20) ? tmp : -tmp;
@@ -96,8 +96,8 @@ short GetVibVal(uint8_t chan) {
 			tmp = ((pos & 0x3f) < 0x20) ? tmp : -tmp;
 			break;
 	}
-	if (ChState[chan]->vibratoFine != 0xf){ // 0xf -> +- (0xf + 1) >> 4 semitone range is what tables are normalized to (default)
-		tmp2 = ChState[chan]->vibratoFine + 1;
+	if (ChState[chan].vibratoFine != 0xf){ // 0xf -> +- (0xf + 1) >> 4 semitone range is what tables are normalized to (default)
+		tmp2 = ChState[chan].vibratoFine + 1;
 		tmp = Mpyhw(tmp2, tmp); // tmp *= tmp2
 
 		tmp = tmp >> 4;
@@ -110,37 +110,37 @@ void FCSChannelPost(uint8_t chan) {
 	volatile uint8_t *ChanRegBase = (volatile uint8_t*)(VSU_S1INT + (chan << 6));
 	uint8_t tmp;
 	// Volume first
-	if (ChState[chan]->volSpeed != 0) {
-		int16_t vol = ChState[chan]->volume + ChState[chan]->volSpeed;
-		if (ChState[chan]->volSpeedTarget != -1) {
-			if ((vol >= ChState[chan]->volSpeedTarget) && (ChState[chan]->volSpeed > 0)
-				|| (vol <= ChState[chan]->volSpeedTarget) && (ChState[chan]->volSpeed < 0)) {
-				vol = ChState[chan]->volSpeedTarget;
-				ChState[chan]->volSpeed = 0;
+	if (ChState[chan].volSpeed != 0) {
+		int16_t vol = ChState[chan].volume + ChState[chan].volSpeed;
+		if (ChState[chan].volSpeedTarget != -1) {
+			if ((vol >= ChState[chan].volSpeedTarget) && (ChState[chan].volSpeed > 0)
+				|| (vol <= ChState[chan].volSpeedTarget) && (ChState[chan].volSpeed < 0)) {
+				vol = ChState[chan].volSpeedTarget;
+				ChState[chan].volSpeed = 0;
 			}
 		}
 
 		if (vol < 0)
 			vol = 0;
-		if (vol > ChState[chan]->volMax)
-			vol = ChState[chan]->volMax;
+		if (vol > ChState[chan].volMax)
+			vol = ChState[chan].volMax;
 
-		ChState[chan]->volume = vol;
+		ChState[chan].volume = vol;
 	}
 	// Write to volume register
-	ChanRegBase[o_S1EV0] = (ChanRegBase[o_S1EV0] & 0xf) | ((ChState[chan]->volume >> 4) & 0xf0);
+	ChanRegBase[o_S1EV0] = (ChanRegBase[o_S1EV0] & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
 
 	// Pitch next
 	uint16_t regvalue;
 
-	if (ChState[chan]->vibratoDepth != 0) {
-		ChState[chan]->vibratoPos = ChState[chan]->vibratoPos + ChState[chan]->vibratoRate & 0x3f;
+	if (ChState[chan].vibratoDepth != 0) {
+		ChState[chan].vibratoPos = ChState[chan].vibratoPos + ChState[chan].vibratoRate & 0x3f;
 	}
 
 	if (LinearPitch)
-		regvalue = LinearFreqInterpolate(ChState[chan]->note, ChState[chan]->pitch, GetVibVal(chan), 0, false, NoteTable);
+		regvalue = LinearFreqInterpolate(ChState[chan].note, ChState[chan].pitch, GetVibVal(chan), 0, false, NoteTable);
 	else {
-		regvalue = GetNoteRegVal(ChState[chan]->note, NoteTable, OctaveTable, SubTable) + ChState[chan]->pitch + GetVibVal(chan);
+		regvalue = GetNoteRegVal(ChState[chan].note, NoteTable, OctaveTable, SubTable) + ChState[chan].pitch + GetVibVal(chan);
 		regvalue = ((short)regvalue < 0) ? 0 : regvalue;
 		regvalue = ((short)regvalue > 2047) ? 1 : 2048 - regvalue;
 	}
