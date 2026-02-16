@@ -6,7 +6,7 @@
 #include "posteval.h"
 #include "hroutines.h"
 
-bool LinearPitch = 1;
+bool LinearPitch;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
 	#embed "example.bin"
@@ -26,6 +26,7 @@ uint8_t FCSEngineStatus = 0; // bit 0: Ready when set, bit 1: Stopped when set
 	
 
 void InitCommandStream(const uint8_t* binfile) {
+	LinearPitch = false;
 	if (*(short*)(binfile + 4) != 6) // Check for 6 channels.
 		return;
 	if (binfile[6] & 2) // Not doing any BE bs; this is a LE machine
@@ -68,13 +69,14 @@ void ParseChannelStream(uint8_t ch, const uint8_t* binfile) {
 }
 
 void FCSReadCommandStreams(const uint8_t* binfile) {
-	if (FCSEngineStatus & 2)
+	if (FCSEngineStatus == 0 || FCSEngineStatus & 2)
 		return;
-	for (uint8_t i = 0; i < 6; i++)
-		if (ChState[i].wait > 0)
+	for (uint8_t i = 0; i < 6; i++){
+		if (ChState[i].wait > 1)
 			ChState[i].wait--;
 		else
 			ParseChannelStream(i, binfile);
+			}
 	for (uint8_t i = 0; i < 6; i++){
 		FCSChannelPost(i);
 	}
@@ -83,8 +85,6 @@ void FCSReadCommandStreams(const uint8_t* binfile) {
 
 
 int main() {
-	// setup engine
-	InitCommandStream(SongStream);
 	while (true) {
 		// speeeeeeeeeeeeeen
 	}
@@ -94,8 +94,10 @@ void __attribute__((interrupt)) timer_interrupt() {
 	DISABLE_IRQS();
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR; // disable timer & acknowledge
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // re-enable
-	ENABLE_IRQS();
 	FCSReadCommandStreams(SongStream);
+	ENABLE_IRQS();
+	__asm__("ld.w 0[sp], r30\n\t" // pop r30 (used for the jump in .vbvectors)
+    		"add 4, sp");
 	return;
 }
 	

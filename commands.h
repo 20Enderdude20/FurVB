@@ -42,7 +42,7 @@ bool CmdModWave(uint8_t chan, const uint8_t* param) {
 	return false;
 };
 
-CommandFunc CmdFullDispatch[] = {
+static CommandFunc CmdFullDispatch[] = {
 	CmdSetupEnv, CmdNoiseLength, CmdWaveform, CmdSetupSweep, 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, CmdSetupMod, NULL, NULL, NULL, CmdModWave,
@@ -108,6 +108,7 @@ bool CmdPitch(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdArpeggio(uint8_t chan, const uint8_t* param) {
+	ChState[chan].arp = param[1];
 	return false;
 };
 
@@ -229,7 +230,7 @@ bool CmdPDelay(uint8_t chan, const uint8_t* param) {
 	return true;
 };
 
-CommandFunc CmdDispatch[] = {
+static CommandFunc CmdDispatch[] = {
 	CmdEvalNote, CmdNoteOff, CmdNoteOffEnv, CmdEnvRel, CmdSetIns, NULL, 
 	NULL, NULL, NULL, NULL, NULL, NULL, CmdPrePorta, CmdArpSpeed, CmdVibrato, 
 	CmdVibRange, CmdVibShape, CmdPitch, CmdArpeggio, CmdVolume, CmdVolSlide, 

@@ -4,6 +4,7 @@
 #include "tables.h"
 #include "special.h"
 #include "vbdefines.h"
+#include "audio.h"
 
 extern bool FCSPtrSize;
 extern bool LinearPitch;
@@ -11,7 +12,7 @@ extern ChannelDataRegisters ChDataReg[];
 extern ChannelState ChState[];
 
 
-uint16_t GetNoteRegVal(uint8_t note, uint16_t* N_Tbl, const uint8_t* O_Tbl, const uint8_t* S_Tbl) {
+uint16_t GetNoteRegVal(uint8_t note, const uint16_t* N_Tbl, const uint8_t* O_Tbl, const uint8_t* S_Tbl) {
 	uint8_t octaveshift = O_Tbl[(note >> 2)];
 	uint32_t regval = 0;
 	if (note < 72)
@@ -107,7 +108,6 @@ short GetVibVal(uint8_t chan) {
 }
 
 void FCSChannelPost(uint8_t chan) {
-	volatile uint8_t *ChanRegBase = (volatile uint8_t*)(VSU_S1INT + (chan << 6));
 	uint8_t tmp;
 	// Volume first
 	if (ChState[chan].volSpeed != 0) {
@@ -128,10 +128,11 @@ void FCSChannelPost(uint8_t chan) {
 		ChState[chan].volume = vol;
 	}
 	// Write to volume register
-	ChanRegBase[o_S1EV0] = (ChanRegBase[o_S1EV0] & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
-
+	tmp = SND_REGS[chan].SxEV0;
+	//ChanRegBase[o_S1EV0] = ChState[chan].keyOff ? (tmp & 0xf) : (tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
+	SND_REGS[chan].SxEV0 = (ChState[chan].keyOff || !ChState[chan].keyOn) ? (tmp & 0xf) : ((tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0));
 	// Pitch next
-	uint16_t regvalue;
+	uint16_t regvalue = 0;
 
 	if (ChState[chan].vibratoDepth != 0) {
 		ChState[chan].vibratoPos = ChState[chan].vibratoPos + ChState[chan].vibratoRate & 0x3f;
@@ -145,8 +146,8 @@ void FCSChannelPost(uint8_t chan) {
 		regvalue = ((short)regvalue > 2047) ? 1 : 2048 - regvalue;
 	}
 	// Write to frequency registers
-	ChanRegBase[o_S1FQL] = (uint8_t)(regvalue & 0xff);
-	ChanRegBase[o_S1FQH] = (uint8_t)((regvalue >> 8) & 0x07);
+	SND_REGS[chan].SxFQL = (uint8_t)(regvalue & 0xff);
+	SND_REGS[chan].SxFQH = (uint8_t)((regvalue >> 8) & 0x07);
 
 	return;
 };

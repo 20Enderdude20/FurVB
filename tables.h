@@ -1,5 +1,5 @@
 //round( 5000000 / (32 * note frequency))
-uint16_t NoteTable[] = {
+const uint16_t NoteTable[] = {
 	//   c-1   c#1   d-1,  d#1,  e-1,  f-1,  f#1,  g-1,  g#1,  a-1,  a#2,  b-2
 		 4778, 4510, 4257, 4018, 3792, 3579, 3378, 3189, 3010, 2841, 2681, 2531
 		 //  Should cover all tunings in spec for 220 Hz <= A-4 <= 880 Hz

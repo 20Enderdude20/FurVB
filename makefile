@@ -18,7 +18,7 @@ OBJCOPY = $(BINDIR)/llvm-objcopy
 TARGET  = -target v810-unknown-vb -mcpu=vb
 
 # Compilation flags
-CFLAGS  = $(TARGET) -I$(INCDIR) -g -O2 -ffreestanding
+CFLAGS  = $(TARGET) -I$(INCDIR) -g -O2 -ffreestanding -Wall -Wextra
 ASFLAGS = $(TARGET) -g
 LDFLAGS = $(TARGET) --ld-path=$(LD) -L$(LIBDIR) \
           -Tvb.ld -nolibc -flto

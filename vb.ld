@@ -64,6 +64,7 @@ SECTIONS
 
   __data_lma = .;
   .data __data_vma : AT(__data_lma) {
+	__data_start = .;
     *(.data)
     *(.data.*)
     *(.sdata)

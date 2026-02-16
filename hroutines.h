@@ -1,87 +1,89 @@
 #include <stdint.h>
 #include "vbdefines.h"
+#include "audio.h"
 
 #define TIMER_20u_50Hz 0x3e7
 #define TIMER_100u_50Hz 0xc7
 extern int main();
+extern void InitCommandStream(const uint8_t* binfile);
+extern const uint8_t SongStream[];
 
 void InitVSUIns() {
-	*(volatile uint8_t*)(VSU_SSTOP) = 1;
-	volatile uint8_t* Wave0Base = (volatile uint8_t*)(VSU_WAVE_0); // Load the default wave (saw)
+	SSTOP = 1;
+	// Load the default wave (saw)
 	uint32_t* wavptr32 = (uint32_t*)DefaultWave; // Unrolled to make wave loading as fast as possible
 	uint32_t tmp = wavptr32[0];
-	Wave0Base[0x0 << 2] = tmp;
+	WAVEDATA1[0x0 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x1 << 2] = tmp;
+	WAVEDATA1[0x1 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x2 << 2] = tmp;
+	WAVEDATA1[0x2 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x3 << 2] = tmp;
+	WAVEDATA1[0x3 << 2] = tmp;
 	tmp = wavptr32[1];
-	Wave0Base[0x4 << 2] = tmp;
+	WAVEDATA1[0x4 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x5 << 2] = tmp;
+	WAVEDATA1[0x5 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x6 << 2] = tmp;
+	WAVEDATA1[0x6 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x7 << 2] = tmp;
+	WAVEDATA1[0x7 << 2] = tmp;
 	tmp = wavptr32[2];
-	Wave0Base[0x8 << 2] = tmp;
+	WAVEDATA1[0x8 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x9 << 2] = tmp;
+	WAVEDATA1[0x9 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0xa << 2] = tmp;
+	WAVEDATA1[0xa << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0xb << 2] = tmp;
+	WAVEDATA1[0xb << 2] = tmp;
 	tmp = wavptr32[3];
-	Wave0Base[0xc << 2] = tmp;
+	WAVEDATA1[0xc << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0xd << 2] = tmp;
+	WAVEDATA1[0xd << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0xe << 2] = tmp;
+	WAVEDATA1[0xe << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0xf << 2] = tmp;
+	WAVEDATA1[0xf << 2] = tmp;
 
 	tmp = wavptr32[4];
-	Wave0Base[0x10 << 2] = tmp;
+	WAVEDATA1[0x10 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x11 << 2] = tmp;
+	WAVEDATA1[0x11 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x12 << 2] = tmp;
+	WAVEDATA1[0x12 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x13 << 2] = tmp;
+	WAVEDATA1[0x13 << 2] = tmp;
 	tmp = wavptr32[5];
-	Wave0Base[0x14 << 2] = tmp;
+	WAVEDATA1[0x14 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x15 << 2] = tmp;
+	WAVEDATA1[0x15 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x16 << 2] = tmp;
+	WAVEDATA1[0x16 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x17 << 2] = tmp;
+	WAVEDATA1[0x17 << 2] = tmp;
 	tmp = wavptr32[6];
-	Wave0Base[0x18 << 2] = tmp;
+	WAVEDATA1[0x18 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x19 << 2] = tmp;
+	WAVEDATA1[0x19 << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x1a << 2] = tmp;
+	WAVEDATA1[0x1a << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x1b << 2] = tmp;
+	WAVEDATA1[0x1b << 2] = tmp;
 	tmp = wavptr32[7];
-	Wave0Base[0x1c << 2] = tmp;
+	WAVEDATA1[0x1c << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x1d << 2] = tmp;
+	WAVEDATA1[0x1d << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x1e << 2] = tmp;
+	WAVEDATA1[0x1e << 2] = tmp;
 	tmp >>= 8;
-	Wave0Base[0x1f << 2] = tmp;
+	WAVEDATA1[0x1f << 2] = tmp;
 
 
 	for (uint8_t chan = 0; chan < 6; chan++) { // Per-channel setup
-		volatile uint8_t* ChanRegBase = (volatile uint8_t*)(VSU_S1INT + (chan << 6));
-		ChanRegBase[o_S1EV0] = 0; // 0 volume, envelopes disabled
-		ChanRegBase[o_S1LRV] = 0xff; // max left volume, max right volume
-		ChanRegBase[o_S1RAM] = 0; // channels set to first wave in RAM
-		ChanRegBase[o_S1INT] = 0x80; // channels are enabled to produce sound, no auto scheduled deactivation (not a thing in furnace)
+		SND_REGS[chan].SxEV0 = 0x00; // 0 volume, envelopes disabled
+		SND_REGS[chan].SxLRV = 0xff; // max left volume, max right volume
+		SND_REGS[chan].SxRAM = 0; // channels set to first wave in RAM
+		SND_REGS[chan].SxINT = 0x80; // channels are enabled to produce sound, no auto scheduled deactivation (not a thing in furnace)
 	}
 	return;
 
@@ -89,6 +91,29 @@ void InitVSUIns() {
 }
 
 void Reset() {
+
+	__asm__(
+	"    movhi   hi(__data_lma), r0, r4\n\t"
+    "    movea   lo(__data_lma), r4, r4\n\t"
+    "    movhi   hi(__data_end), r0, r5\n\t"
+    "    movea   lo(__data_end), r5, r5\n\t"
+    "    movhi   hi(__data_start), r0, r6\n\t"
+    "    movea   lo(__data_start), r6, r6\n\t"
+
+    /* initialize data */
+    "    jr  3f\n\t"
+    "2:\n\t"
+    "    ld.b    0[r4], r7\n\t"
+    "    st.b    r7, 0[r6]\n\t"
+    "    add 1,r4\n\t"
+    "    add 1,r6\n\t"
+    "3:\n\t"
+    "    cmp r5,r6\n\t"
+    "    blt 2b\n\t"
+		"movhi   hi(__gp), r0, sp\n\t"  
+		"movea   lo(__gp), sp, gp"      
+	);
+
 	*(volatile uint8_t*)(VSU_SSTOP) = 1; // Early mute
 	for (uint16_t i = 0xffff; i != 0; i--) {
 		// Spinning for WRAM to warm up
@@ -131,6 +156,9 @@ void Reset() {
 	*(volatile uint8_t*)(INTCLR) = *(volatile uint8_t*)(INTPND);
 
 	*(volatile uint8_t*)(INTENB) = 0; // Disable all VIP IRQs
+
+	// setup engine
+	InitCommandStream(SongStream);
 
 	ENABLE_IRQS();
 	__asm__("ldsr r0, psw");
