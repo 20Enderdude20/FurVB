@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "vbdefines.h"
+#include "audio.h"
 
 #define CMD_FULL_DISPATCH_OFFSET 0x3e // Lowest full command value used relevant for Virtual Boy
 
@@ -23,6 +23,8 @@ bool CmdSetupEnv(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdNoiseLength(uint8_t chan, const uint8_t* param) {
+	 //channel 6 (noise)
+	SND_REGS[5].SxEV1 = (param[1] & 0x7) << 4;
 	return false; 
 };
 
@@ -42,7 +44,7 @@ bool CmdModWave(uint8_t chan, const uint8_t* param) {
 	return false;
 };
 
-static CommandFunc CmdFullDispatch[] = {
+const CommandFunc CmdFullDispatch[] = {
 	CmdSetupEnv, CmdNoiseLength, CmdWaveform, CmdSetupSweep, 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, CmdSetupMod, NULL, NULL, NULL, CmdModWave,
@@ -58,8 +60,8 @@ const uint8_t FullCmdLengths[] = { // Starting at full command 0x3e
 };
 // Normal commands
 bool CmdEvalNote(uint8_t chan, const uint8_t* param) {
-	ChState[chan].oldNote = ChState[chan].note;
-	ChState[chan].note = param[0];
+	ChState[chan].baseFreq = param[0] << 7;
+	ChState[chan].portaTemp = 0;
 	ChState[chan].keyOn = true;
 	ChState[chan].keyOff = false;
 	return false; // Boolean tells us if the loop these are used in should be done yet
@@ -84,6 +86,7 @@ bool CmdSetIns(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPrePorta(uint8_t chan, const uint8_t* param) {
+
 	return false;
 };
 
@@ -92,6 +95,13 @@ bool CmdArpSpeed(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdVibrato(uint8_t chan, const uint8_t* param) {
+	ChState[chan].vibratoRate = (param[1] & 0xf0) >> 4;
+
+	if ((param[1] & 0xf) == 0)
+		ChState[chan].vibratoRate = 0;
+	else
+		ChState[chan].vibratoDepth = (param[1] & 0xf) - 1;
+
 	return false;
 };
 
@@ -104,6 +114,7 @@ bool CmdVibShape(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPitch(uint8_t chan, const uint8_t* param) {
+	ChState[chan].pitch = (char)param[1];
 	return false;
 };
 
@@ -122,6 +133,18 @@ bool CmdVolSlide(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPorta(uint8_t chan, const uint8_t* param) {
+	ChState[chan].portaNote = param[1] << 7; // Target
+	if (ChState[chan].portaNote > ChState[chan].baseFreq)
+	{
+		ChState[chan].portaSign = false; // positive frequency sweep
+		ChState[chan].portaSpeed = param[2];
+		}
+	else
+	{
+		ChState[chan].portaSign = true; // negative frequency sweep
+		ChState[chan].portaSpeed = -param[2];
+		}
+	ChState[chan].inPorta = true;
 	return false;
 };
 
@@ -163,7 +186,7 @@ bool CmdOffWait(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdFull(uint8_t chan, const uint8_t* param) {
-	return CmdFullDispatch[param[0] - CMD_FULL_DISPATCH_OFFSET](chan, param);
+	return CmdFullDispatch[param[0] - CMD_FULL_DISPATCH_OFFSET](chan, param + 1);
 };
 
 bool CmdCall16(uint8_t chan, const uint8_t* param) {
@@ -207,7 +230,7 @@ bool CmdWait(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdStop(uint8_t chan, const uint8_t* param) {
-	*(volatile uint8_t*)(VSU_SSTOP) = 1;
+	SSTOP = 1;
 	FCSEngineStatus |= 2;
 	return true;
 };
