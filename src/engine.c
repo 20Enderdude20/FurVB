@@ -6,10 +6,13 @@
 #include "posteval.h"
 #include "hroutines.h"
 
+
 bool LinearPitch;
 
+uint16_t deltatime;
+
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "example.bin"
+	#embed "streams/vib_phase.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
@@ -26,7 +29,7 @@ uint8_t FCSEngineStatus = 0; // bit 0: Ready when set, bit 1: Stopped when set
 	
 
 void InitCommandStream(const uint8_t* binfile) {
-	LinearPitch = false;
+	LinearPitch = true;
 	if (*(short*)(binfile + 4) != 6) // Check for 6 channels.
 		return;
 	if (binfile[6] & 2) // Not doing any BE bs; this is a LE machine
@@ -36,14 +39,14 @@ void InitCommandStream(const uint8_t* binfile) {
 	PresetDelay = &binfile[8];
 	PresetInstrument = &binfile[0x18];
 	PresetVolume = &binfile[0x1e];
-	SpeedDialCMD = &binfile[0x22];
+	SpeedDialCMD = &binfile[0x24];
 	for (uint8_t i = 0; i < 6; i++) {
+		ChannelState_Init(&ChState[i]); // Poor man's constructor
 		ChDataReg[i].ChannelStackPtr = 0;
 		if (FCSPtrSize)
 			ChDataReg[i].PC = *(uint32_t*)(binfile + 40 + (i << 2));
 		else
 			ChDataReg[i].PC = *(uint16_t*)(binfile + 40 + (i << 1));
-		ChannelState_Init(ChState[i]); // Poor man's constructor
 	};
 
 	FCSEngineStatus = 1;
@@ -86,16 +89,18 @@ void FCSReadCommandStreams(const uint8_t* binfile) {
 
 int main() {
 	while (true) {
+
 		// speeeeeeeeeeeeeen
 	}
 	return 0;
 }
 void __attribute__((interrupt)) timer_interrupt() {
 	DISABLE_IRQS();
-	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR; // disable timer & acknowledge
-	*(volatile uint8_t*)(TIMER_TCR) = TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // re-enable
-	FCSReadCommandStreams(SongStream);
+	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR; // disable timer & acknowledge
+	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // re-enable
 	ENABLE_IRQS();
+	FCSReadCommandStreams(SongStream);
+	deltatime = TIMER_20u_50Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
 	__asm__("ld.w 0[sp], r30\n\t" // pop r30 (used for the jump in .vbvectors)
     		"add 4, sp");
 	return;

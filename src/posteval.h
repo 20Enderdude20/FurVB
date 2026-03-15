@@ -24,29 +24,29 @@ uint16_t GetNoteRegVal(uint8_t note, const uint16_t* N_Tbl, const uint8_t* O_Tbl
 
 	return (uint16_t)regval;
 }
-uint16_t LinearFreqInterpolate(uint16_t basenote, char pitch1, char pitch2, uint16_t arp, bool Arpfixed, uint16_t* N_Tbl) {
-	uint16_t nbase = (basenote << 7) + pitch1 + pitch2;
+uint16_t LinearFreqInterpolate(uint16_t basenote, short pitch1, short pitch2, short arp, bool Arpfixed, uint16_t* N_Tbl) {
+	uint16_t nbase = basenote + pitch1 + pitch2;
 	uint16_t nupper;
-	uint16_t rdelta;
+	uint16_t rdelta = 0;
 	uint16_t regval;
 	if (!Arpfixed)
-		nbase += arp << 7;
+		nbase += arp;
 	else
-		nbase = (arp << 7) + pitch1 + pitch2;
-	uint8_t factor = 0x7f - (nbase & 0x7f); // Why (128 - factor)? You'll see in the if statement
+		nbase = arp + pitch1 + pitch2;
+	uint8_t factor = nbase & 0x7f;
 	// interpolation format: 0bNNNNNNNNN.nnnnnnn
 	// N: coarse note selection (by semitone, selects which notes in table to interpolate between)
 	// n: fine pitch selection (128th of semitone)
 	regval = GetNoteRegVal(nbase >> 7, N_Tbl, OctaveTable, SubTable); //aka nlower
-	if (factor != 0x7f) {	// Get the two points to interpolate between
+	if (factor != 0) {	// Get the two points to interpolate between
 		nupper = GetNoteRegVal((nbase >> 7) + 1, N_Tbl, OctaveTable, SubTable);
 		rdelta = regval - nupper; // divider values at this point in func: lower note is higher value, and positive delta is desired
 
-		rdelta = Mpyhw(factor, rdelta); //rdelta *= factor 
+		rdelta = Mpyhw(factor, rdelta); // rdelta(s17) *= factor(s32) (9 cycles)
 
 		rdelta >>= 7; //rdelta /= 128
 	}
-	regval += rdelta;
+	regval -= rdelta;
 
 	return (regval > 2047) ?
 		1 :
@@ -58,7 +58,7 @@ short GetVibVal(uint8_t chan) {
 	uint8_t depth = ChState[chan].vibratoDepth;
 	short tmp = 0;
 	short tmp2 = 0;
-	if (depth == 0)
+	if (ChState[chan].vibratoRate == 0)
 		return 0;
 	switch (ChState[chan].vibratoShape) {
 		case 0:
@@ -131,18 +131,33 @@ void FCSChannelPost(uint8_t chan) {
 	tmp = SND_REGS[chan].SxEV0;
 	//ChanRegBase[o_S1EV0] = ChState[chan].keyOff ? (tmp & 0xf) : (tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
 	SND_REGS[chan].SxEV0 = (ChState[chan].keyOff || !ChState[chan].keyOn) ? (tmp & 0xf) : ((tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0));
-	// Pitch next
+	// Pitch (note, vibrato, arp, and portamento) next
 	uint16_t regvalue = 0;
 
-	if (ChState[chan].vibratoDepth != 0) {
-		ChState[chan].vibratoPos = ChState[chan].vibratoPos + ChState[chan].vibratoRate & 0x3f;
+	if (ChState[chan].vibratoRate != 0) {
+		ChState[chan].vibratoPos = (ChState[chan].vibratoPos + ChState[chan].vibratoRate) & 0x3f;
+	}
+	if (LinearPitch){
+		if(ChState[chan].inPorta){
+			if(ChState[chan].portaSign == (ChState[chan].baseFreq > ChState[chan].portaNote))
+				ChState[chan].baseFreq += ChState[chan].portaSpeed;
+			else
+				ChState[chan].inPorta = false;
+		}
+		regvalue = LinearFreqInterpolate(ChState[chan].baseFreq, ChState[chan].pitch, GetVibVal(chan), 0, false, NoteTable);
 	}
 
-	if (LinearPitch)
-		regvalue = LinearFreqInterpolate(ChState[chan].note, ChState[chan].pitch, GetVibVal(chan), 0, false, NoteTable);
 	else {
-		regvalue = GetNoteRegVal(ChState[chan].note, NoteTable, OctaveTable, SubTable) + ChState[chan].pitch + GetVibVal(chan);
-		regvalue = ((short)regvalue < 0) ? 0 : regvalue;
+		if(ChState[chan].inPorta){
+			if(ChState[chan].portaSign == (ChState[chan].baseFreq > ChState[chan].portaNote))
+				ChState[chan].baseFreq -= ChState[chan].portaSpeed;
+			else
+				ChState[chan].inPorta = false;
+		}
+		else
+			ChState[chan].baseFreq = GetNoteRegVal(ChState[chan].note, NoteTable, OctaveTable, SubTable);
+		regvalue = ChState[chan].baseFreq - ChState[chan].pitch - GetVibVal(chan);
+		regvalue = ((short)regvalue <= 0) ? 1 : regvalue;
 		regvalue = ((short)regvalue > 2047) ? 1 : 2048 - regvalue;
 	}
 	// Write to frequency registers

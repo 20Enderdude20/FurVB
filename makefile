@@ -2,8 +2,10 @@
 NAME = FurVB
 
 OUTPUTDIR = output
+SRCDIRS = src libgccvb crt0
+INCLUDE_DIRS = . src libgccvb crt0
 TOOLCHAIN_ARCH := v810
-TOOLCHAIN_DIR := $(HOME)/llvm-v810
+TOOLCHAIN_DIR := C:/Users/lanfr/Documents/llvm-v810
 
 # Toolchain paths
 BINDIR = $(TOOLCHAIN_DIR)/bin
@@ -14,18 +16,29 @@ CC      = $(BINDIR)/clang
 LD      = $(BINDIR)/ld.lld
 OBJCOPY = $(BINDIR)/llvm-objcopy
 
+# Host shell helpers (Win vs Linux; I shouldn't need two separate makefiles lol)
+ifeq ($(OS),Windows_NT)
+SHELL := cmd
+.SHELLFLAGS := /C
+MKDIR_P = if not exist "$1" mkdir "$1"
+RM_RF   = if exist "$1" rmdir /s /q "$1"
+else
+MKDIR_P = mkdir -p "$1"
+RM_RF   = rm -rf "$1"
+endif
+
 # Common target flags
 TARGET  = -target v810-unknown-vb -mcpu=vb
 
 # Compilation flags
-CFLAGS  = $(TARGET) -I$(INCDIR) -g -O2 -ffreestanding -Wall -Wextra
+CFLAGS  = $(TARGET) -I$(INCDIR) $(addprefix -I,$(INCLUDE_DIRS)) -g -O2 -ffreestanding -Wall -Wextra
 ASFLAGS = $(TARGET) -g
 LDFLAGS = $(TARGET) --ld-path=$(LD) -L$(LIBDIR) \
           -Tvb.ld -nolibc -flto
 
 # Automatically collect source files
-CFILES := $(wildcard *.c)
-SFILES := $(wildcard *.s)
+CFILES := $(foreach d,$(SRCDIRS),$(wildcard $(d)/*.c))
+SFILES := $(foreach d,$(SRCDIRS),$(wildcard $(d)/*.s))
 
 # Object files go in output/
 COBJS := $(patsubst %.c,$(OUTPUTDIR)/%.o,$(CFILES))
@@ -40,26 +53,28 @@ VBFILE  := $(OUTPUTDIR)/$(NAME).vb
 all: $(VBFILE)
 
 # Convert ELF to final binary
-$(VBFILE): $(ELFFILE)
+$(VBFILE): $(ELFFILE) | $(OUTPUTDIR)
 	@$(OBJCOPY) -S -O binary $< $@
 
 # Link
-$(ELFFILE): $(OFILES)
+$(ELFFILE): $(OFILES) | $(OUTPUTDIR)
 	@$(CC) $(OFILES) $(LDFLAGS) -o $@
 
 # Compile C
-$(OUTPUTDIR)/%.o: %.c | $(OUTPUTDIR)
+$(OUTPUTDIR)/%.o: %.c
+	@$(call MKDIR_P,$(@D))
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 # Assemble .s (interrupt vectors included)
-$(OUTPUTDIR)/%.o: %.s | $(OUTPUTDIR)
+$(OUTPUTDIR)/%.o: %.s
+	@$(call MKDIR_P,$(@D))
 	@$(CC) $(ASFLAGS) -c $< -o $@
 
 # Ensure output directory exists
 $(OUTPUTDIR):
-	@mkdir -p $(OUTPUTDIR)
+	@$(call MKDIR_P,$(OUTPUTDIR))
 
 clean:
-	@rm -f $(OUTPUTDIR)/*
+	@$(call RM_RF,$(OUTPUTDIR))
 
 distclean: clean
