@@ -1,0 +1,3 @@
+[submodule "extern/libgccvb"]
+	path = extern/libgccvb
+	url = https://github.com/VUEngine/libgccvb.git
