@@ -5,7 +5,11 @@ OUTPUTDIR = output
 SRCDIRS = src libgccvb crt0
 INCLUDE_DIRS = . src libgccvb crt0
 TOOLCHAIN_ARCH := v810
+ifeq ($(OS),Windows_NT)
+TOOLCHAIN_DIR := $(USERPROFILE)/llvm-v810
+else
 TOOLCHAIN_DIR := $(HOME)/llvm-v810
+endif
 
 # Toolchain paths
 BINDIR = $(TOOLCHAIN_DIR)/bin
