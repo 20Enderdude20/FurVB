@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <stdbool.h>
+#include "types.h"
 #include <stdalign.h>
 #include "engine.h"
 #include "commands.h"

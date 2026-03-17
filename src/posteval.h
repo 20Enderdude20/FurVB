@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <stdbool.h>
+#include "types.h"
 #include <stddef.h>
 #include "tables.h"
 #include "special.h"

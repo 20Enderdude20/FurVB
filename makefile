@@ -2,8 +2,8 @@
 NAME = FurVB
 
 OUTPUTDIR = output
-SRCDIRS = src libgccvb crt0
-INCLUDE_DIRS = . src libgccvb crt0
+SRCDIRS = src crt0
+INCLUDE_DIRS = . src libgccvb crt0 extern/libgccvb/source
 TOOLCHAIN_ARCH := v810
 ifeq ($(OS),Windows_NT)
 TOOLCHAIN_DIR := $(USERPROFILE)/llvm-v810
@@ -41,7 +41,8 @@ LDFLAGS = $(TARGET) --ld-path=$(LD) -L$(LIBDIR) \
           -Tvb.ld -nolibc -flto
 
 # Automatically collect source files
-CFILES := $(foreach d,$(SRCDIRS),$(wildcard $(d)/*.c))
+CFILES := $(foreach d,$(SRCDIRS),$(wildcard $(d)/*.c)) \
+		  extern/libgccvb/source/audio.c
 SFILES := $(foreach d,$(SRCDIRS),$(wildcard $(d)/*.s))
 
 # Object files go in output/
