@@ -12,7 +12,7 @@ bool LinearPitch;
 uint16_t deltatime;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "streams/vib_phase.bin"
+	#embed "streams/tube_panic.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
