@@ -64,7 +64,7 @@ SECTIONS
 
   __data_lma = .;
   .data __data_vma : AT(__data_lma) {
-	__data_start = .;
+    __data_start = .;
     *(.data)
     *(.data.*)
     *(.sdata)
@@ -75,7 +75,7 @@ SECTIONS
 
   __data_end = .;
 
-  .bss (NOLOAD) : {
+  .bss : {
     *(.dynbss)
     *(.bss)
     *(.sdata)
@@ -85,13 +85,15 @@ SECTIONS
   /* These must appear regardless of  .  */
 
 
-  /* Compute a power-of-two ROM size that includes vectors. */
+  /* Compute the vector address */
+  /* Prevent overlaps with vbvectors */
   __sections_size = SIZEOF(.text) + SIZEOF(.rodata) + SIZEOF(.data);
   __rom_size = 1 << LOG2CEIL(__sections_size + 0x220);
   __rom_end = ORIGIN(rom) + __rom_size;
 
-  /* Place interrupt and reset vectors at the end of the ROM image. */
-  .vbvectors (__rom_end - 0x220) : {
+  /* Place interupt and reset vector at end of rom */
+
+  .vbvectors 0x07FFFDE0 : AT(__rom_end - 0x220) {
     KEEP (*(.vbvectors))
   } >rom = 0xFF 
 }

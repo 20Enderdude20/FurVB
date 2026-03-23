@@ -7,6 +7,9 @@
 #define TIMER_20u_60Hz 0x340
 #define TIMER_100u_60Hz 0xA6
 
+
+#define TIMER_20u_48Hz 1042
+
 extern int main();
 extern void InitCommandStream(const uint8_t* binfile);
 extern const uint8_t SongStream[];
@@ -170,8 +173,8 @@ void Reset() {
 
 	// Setup the timer
 
-	*(volatile uint8_t*)(TIMER_TLR) = TIMER_20u_50Hz & 0xff;
-	*(volatile uint8_t*)(TIMER_THR) = TIMER_20u_50Hz >> 8;
+	*(volatile uint8_t*)(TIMER_TLR) = TIMER_20u_48Hz & 0xff;
+	*(volatile uint8_t*)(TIMER_THR) = TIMER_20u_48Hz >> 8;
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // 20 us
 	main();
 	return;

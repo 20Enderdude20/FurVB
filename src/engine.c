@@ -100,7 +100,7 @@ void __attribute__((interrupt)) timer_interrupt() {
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // re-enable
 	ENABLE_IRQS();
 	FCSReadCommandStreams(SongStream);
-	deltatime = TIMER_20u_50Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
+	deltatime = TIMER_20u_48Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
 	__asm__("ld.w 0[sp], r30\n\t" // pop r30 (used for the jump in .vbvectors)
     		"add 4, sp");
 	return;
