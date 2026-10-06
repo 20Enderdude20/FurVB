@@ -173,8 +173,8 @@ void Reset() {
 
 	// Setup the timer
 
-	*(volatile uint8_t*)(TIMER_TLR) = TIMER_20u_48Hz & 0xff;
-	*(volatile uint8_t*)(TIMER_THR) = TIMER_20u_48Hz >> 8;
+	*(volatile uint8_t*)(TIMER_TLR) = TIMER_20u_60Hz & 0xff;
+	*(volatile uint8_t*)(TIMER_THR) = TIMER_20u_60Hz >> 8;
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // 20 us
 	main();
 	return;

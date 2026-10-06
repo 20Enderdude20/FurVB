@@ -11,9 +11,14 @@ extern const uint8_t* PresetInstrument;
 extern const uint8_t* PresetDelay;
 extern const uint8_t* PresetVolume;
 extern const uint8_t* SpeedDialCMD;
+extern bool LinearPitch;
 
 extern ChannelDataRegisters ChDataReg[];
 extern ChannelState ChState[];
+extern uint16_t GetNoteRegVal(uint8_t note, const uint16_t* N_Tbl, const uint8_t* O_Tbl, const uint8_t* S_Tbl);
+extern const uint16_t NoteTable[];
+extern const uint8_t OctaveTable[];
+extern const uint8_t SubTable[];
 
 typedef bool (*CommandFunc)(uint8_t chan, const uint8_t* param);
 
@@ -134,15 +139,32 @@ bool CmdVolSlide(uint8_t chan, const uint8_t* param) {
 
 bool CmdPorta(uint8_t chan, const uint8_t* param) {
 	ChState[chan].portaNote = param[1] << 7; // Target
-	if (ChState[chan].portaNote > ChState[chan].baseFreq)
-	{
-		ChState[chan].portaSign = false; // positive frequency sweep
-		ChState[chan].portaSpeed = param[2];
+	if (LinearPitch)
+		{
+			if (ChState[chan].portaNote > ChState[chan].baseFreq)
+			{
+				ChState[chan].portaSign = false; // positive frequency sweep
+				ChState[chan].portaSpeed = (param[2])<<2;
+				}
+			else
+			{
+				ChState[chan].portaSign = true; // negative frequency sweep
+				ChState[chan].portaSpeed = (-param[2])<<2;
+			}
 		}
-	else
-	{
-		ChState[chan].portaSign = true; // negative frequency sweep
-		ChState[chan].portaSpeed = -param[2];
+		else
+				{
+			if (2048 - (GetNoteRegVal(ChState[chan].portaNote >> 7, NoteTable, OctaveTable, SubTable) ) 
+			> (SND_REGS[chan].SxFQL + (SND_REGS[chan].SxFQH << 8)))
+			{
+				ChState[chan].portaSign = false; // positive frequency sweep
+				ChState[chan].portaSpeed = param[2];
+				}
+			else
+			{
+				ChState[chan].portaSign = true; // negative frequency sweep
+				ChState[chan].portaSpeed = -param[2];
+			}
 		}
 	ChState[chan].inPorta = true;
 	return false;
@@ -278,7 +300,7 @@ const uint8_t CmdLengths[] = { // Starting at command 0xb4
 // c7 c8 c9 ca cb cc cd ce cf d0 d1 d2 d3 d4 d5 d6
 	2, 2, 3, 2, 5, 2, 2, 2, 3, 4, 1, 1, 1, 5, 5, 1,
 // d7 d8 d9 da db dc dd de df e0 e1 e2 e3 e4 e5 e6
-	1, 0, 0, 0, 5, 3, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, // 0 for calls, returns since the PC is changed by them already, and stop to prevent overflow. 
+	1, 0, 0, 0, 5, 3, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, // 0 for calls & returns since the PC is changed by them already, and stop to prevent overflow. 
 // e7 e8 e9 ea eb ec ed ee ef f0 f1 f2 f3 f4 f5 f6
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
 // f7 f8 f9 fa fb fc fd fe ff

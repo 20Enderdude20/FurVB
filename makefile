@@ -8,7 +8,7 @@ TOOLCHAIN_ARCH := v810
 ifeq ($(OS),Windows_NT)
 TOOLCHAIN_DIR := $(USERPROFILE)/llvm-v810
 else
-TOOLCHAIN_DIR := $(HOME)/llvm-v810
+TOOLCHAIN_DIR := $(HOME)/v810-llvm/build/
 endif
 
 # Toolchain paths

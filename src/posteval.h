@@ -139,10 +139,13 @@ void FCSChannelPost(uint8_t chan) {
 	}
 	if (LinearPitch){
 		if(ChState[chan].inPorta){
-			if(ChState[chan].portaSign == (ChState[chan].baseFreq > ChState[chan].portaNote))
+			if(ChState[chan].portaSign == (ChState[chan].baseFreq + ChState[chan].portaSpeed > ChState[chan].portaNote))
 				ChState[chan].baseFreq += ChState[chan].portaSpeed;
 			else
+			{
+				ChState[chan].baseFreq = ChState[chan].portaNote;
 				ChState[chan].inPorta = false;
+			}
 		}
 		regvalue = LinearFreqInterpolate(ChState[chan].baseFreq, ChState[chan].pitch, GetVibVal(chan), 0, false, NoteTable);
 	}
@@ -152,6 +155,7 @@ void FCSChannelPost(uint8_t chan) {
 			if(ChState[chan].portaSign == (ChState[chan].baseFreq > ChState[chan].portaNote))
 				ChState[chan].baseFreq -= ChState[chan].portaSpeed;
 			else
+
 				ChState[chan].inPorta = false;
 		}
 		else
