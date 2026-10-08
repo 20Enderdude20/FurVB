@@ -134,6 +134,7 @@ bool CmdVolume(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdVolSlide(uint8_t chan, const uint8_t* param) {
+	ChState[chan].volSpeed = param[1] | (param[2] << 8);
 	return false;
 };
 
@@ -296,9 +297,9 @@ const uint8_t CmdLengths[] = { // Starting at command 0xb4
 // b4 b5 b6
 	1, 1, 1,
 // b7 b8 b9 ba bb bc bd be bf c0 c1 c2 c3 c4 c5 c6
-	1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+	1, 2, 5, 6, 5, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
 // c7 c8 c9 ca cb cc cd ce cf d0 d1 d2 d3 d4 d5 d6
-	2, 2, 3, 2, 5, 2, 2, 2, 3, 4, 1, 1, 1, 5, 5, 1,
+	2, 3, 3, 2, 5, 2, 2, 2, 3, 4, 1, 1, 1, 5, 5, 1,
 // d7 d8 d9 da db dc dd de df e0 e1 e2 e3 e4 e5 e6
 	1, 0, 0, 0, 5, 3, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, // 0 for calls & returns since the PC is changed by them already, and stop to prevent overflow. 
 // e7 e8 e9 ea eb ec ed ee ef f0 f1 f2 f3 f4 f5 f6

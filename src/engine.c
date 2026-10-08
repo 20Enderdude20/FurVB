@@ -12,7 +12,7 @@ bool LinearPitch = false;
 uint16_t deltatime;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "streams/portavib.bin"
+	#embed "streams/volfade.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
