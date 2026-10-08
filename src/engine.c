@@ -5,14 +5,17 @@
 #include "commands.h"
 #include "posteval.h"
 #include "hroutines.h"
+#include "audio.h"
 
 
 bool LinearPitch = false;
 
+SOUNDREGSHORT SND_REGS_WRAM[6];
+
 uint16_t deltatime;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "streams/volfade.bin"
+	#embed "streams/porta.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
@@ -23,6 +26,7 @@ _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
 
  ChannelDataRegisters ChDataReg[6];
  ChannelState ChState[6];
+ 
 
 
 uint8_t FCSEngineStatus = 0; // bit 0: Ready when set, bit 1: Stopped when set

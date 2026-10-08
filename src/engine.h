@@ -88,6 +88,24 @@ void ChannelState_Init(ChannelState* ch_s) {
 	return;
 }
 
+typedef struct SOUNDREGSHORT
+{
+	// this table is for the most part untested, but looks to be accurate
+	//                 |      D7      ||      D6      ||      D5      ||      D4      ||      D3      ||      D2      ||      D1      ||      D0      |
+	u8 SxINT; //       [----Enable----][--XXXXXXXXXX--][-Interval/??--][--------------------------------Interval Data---------------------------------]
+	u8 SxLRV; //       [---------------------------L Level----------------------------][---------------------------R Level----------------------------]
+	u8 SxFQL; //       [------------------------------------------------------Frequency Low Byte------------------------------------------------------]
+	u8 SxFQH; //       [--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--------------Frequency High Byte-------------]
+	u8 SxEV0; //       [---------------------Initial Envelope Value-------------------][------U/D-----][-----------------Envelope Step----------------]
+			 //Ch. 1-4 [--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][------R/S-----][----On/Off----]
+			 //Ch. 5   [--XXXXXXXXXX--][------E/D-----][----?/Short---][--Mod./Sweep--][--XXXXXXXXXX--][--XXXXXXXXXX--][------R/S-----][----On/Off----]
+	u8 SxEV1; //Ch. 6  [--XXXXXXXXXX--][----------------------E/D---------------------][--XXXXXXXXXX--][--XXXXXXXXXX--][------R/S-----][----On/Off----]
+	// Ch. 1-5 only (I believe address is only 3 bits, but may be 4, needs testing)
+	u8 SxRAM; //       [--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--XXXXXXXXXX--][--------------Waveform RAM Address------------]
+	// Ch. 5 only
+	u8 S5SWP; //       [------CLK-----][-------------Sweep/Modulation Time------------][------U/D-----][----------------Number of Shifts--------------]
+} SOUNDREGSHORT;
+
 typedef struct {
 	short val[256];
 	unsigned char len, delay, speed, loop, rel;

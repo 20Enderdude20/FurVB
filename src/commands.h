@@ -12,6 +12,7 @@ extern const uint8_t* PresetDelay;
 extern const uint8_t* PresetVolume;
 extern const uint8_t* SpeedDialCMD;
 extern bool LinearPitch;
+extern SOUNDREGSHORT SND_REGS_WRAM[];
 
 extern ChannelDataRegisters ChDataReg[];
 extern ChannelState ChState[];
@@ -29,7 +30,8 @@ bool CmdSetupEnv(uint8_t chan, const uint8_t* param) {
 
 bool CmdNoiseLength(uint8_t chan, const uint8_t* param) {
 	 //channel 6 (noise)
-	SND_REGS[5].SxEV1 = (param[1] & 0x7) << 4;
+	SND_REGS_WRAM[5].SxEV1 |= (param[1] & 0x7) << 4;
+	SND_REGS[5].SxEV1 = SND_REGS_WRAM[5].SxEV1;
 	return false; 
 };
 
@@ -156,7 +158,7 @@ bool CmdPorta(uint8_t chan, const uint8_t* param) {
 		else
 				{
 			if (2048 - (GetNoteRegVal(ChState[chan].portaNote >> 7, NoteTable, OctaveTable, SubTable) ) 
-			> (SND_REGS[chan].SxFQL + (SND_REGS[chan].SxFQH << 8)))
+			> (SND_REGS_WRAM[chan].SxFQL + (SND_REGS_WRAM[chan].SxFQH << 8)))
 			{
 				ChState[chan].portaSign = false; // positive frequency sweep
 				ChState[chan].portaSpeed = param[2];

@@ -10,6 +10,7 @@ extern bool FCSPtrSize;
 extern bool LinearPitch;
 extern ChannelDataRegisters ChDataReg[];
 extern ChannelState ChState[];
+extern SOUNDREGSHORT SND_REGS_WRAM[];
 
 
 uint16_t GetNoteRegVal(uint8_t note, const uint16_t* N_Tbl, const uint8_t* O_Tbl, const uint8_t* S_Tbl) {
@@ -128,7 +129,7 @@ void FCSChannelPost(uint8_t chan) {
 		ChState[chan].volume = vol;
 	}
 	// Write to volume register
-	tmp = SND_REGS[chan].SxEV0;
+	tmp = SND_REGS_WRAM[chan].SxEV0;
 	//ChanRegBase[o_S1EV0] = ChState[chan].keyOff ? (tmp & 0xf) : (tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
 	SND_REGS[chan].SxEV0 = (ChState[chan].keyOff || !ChState[chan].keyOn) ? (tmp & 0xf) : ((tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0));
 	// Pitch (note, vibrato, arp, and portamento) next
@@ -163,6 +164,11 @@ void FCSChannelPost(uint8_t chan) {
 		regvalue = ChState[chan].baseFreq - ChState[chan].pitch - GetVibVal(chan);
 		regvalue = ((short)regvalue <= 0) ? 1 : regvalue;
 		regvalue = ((short)regvalue > 2047) ? 1 : 2048 - regvalue;
+
+		SND_REGS_WRAM[chan].SxFQL = (uint8_t)(regvalue & 0xff);
+		SND_REGS_WRAM[chan].SxFQH = (uint8_t)((regvalue >> 8) & 0x07);
+		SND_REGS[chan].SxFQL = SND_REGS_WRAM[chan].SxFQL;
+		SND_REGS[chan].SxFQH = SND_REGS_WRAM[chan].SxFQH;
 	}
 	// Write to frequency registers
 	SND_REGS[chan].SxFQL = (uint8_t)(regvalue & 0xff);
