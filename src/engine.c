@@ -6,16 +6,16 @@
 #include "posteval.h"
 #include "hroutines.h"
 #include "audio.h"
+#include "utils.h"
 
 
 bool LinearPitch = false;
-
-SOUNDREGSHORT SND_REGS_WRAM[6];
+//#define REGPRINT
 
 uint16_t deltatime;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "streams/porta.bin"
+	#embed "streams/works.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
@@ -26,6 +26,7 @@ _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
 
  ChannelDataRegisters ChDataReg[6];
  ChannelState ChState[6];
+ SOUNDREGSHORT SND_REGS_WRAM[6];
  
 
 
@@ -33,6 +34,12 @@ uint8_t FCSEngineStatus = 0; // bit 0: Ready when set, bit 1: Stopped when set
 	
 
 void InitCommandStream(const uint8_t* binfile) {
+	lfsrreg[0] = 0xc171; // seeds for LFSR noise generation in each channel
+	lfsrreg[1] = 0x1a22;
+	lfsrreg[2] = 0xa12d;
+	lfsrreg[3] = 0x1248;
+	lfsrreg[4] = 0x124a816;
+	lfsrreg[5] = 0x1a248162;
 	LinearPitch = true;
 	if (*(short*)(binfile + 4) != 6) // Check for 6 channels.
 		return;
@@ -104,9 +111,12 @@ void __attribute__((interrupt)) timer_interrupt() {
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // re-enable
 	ENABLE_IRQS();
 	FCSReadCommandStreams(SongStream);
-	deltatime = TIMER_20u_48Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
-	__asm__("ld.w 0[sp], r30\n\t" // pop r30 (used for the jump in .vbvectors)
-    		"add 4, sp");
+	#ifdef REGPRINT
+		pchannelstats();
+	#endif
+	deltatime = TIMER_20u_60Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
 	return;
 }
+
+
 	

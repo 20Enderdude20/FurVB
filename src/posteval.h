@@ -75,12 +75,24 @@ short GetVibVal(uint8_t chan) {
 			tmp = ((pos & 0x3f) < 0x20) ? -tmp : 0;
 			break;
 		case 3:
+			tmp = ((pos & 0x1f) < 0x10) ? LinTable[depth][pos & 0x0f] : LinTable[depth][0xf - (pos & 0xf)];
+			tmp = ((pos & 0x3f) < 0x20) ? tmp : -tmp;
+			break;
 		case 4:
+			tmp = LinTable[depth][pos >> 2 & 0x0f];
+			break;
 		case 5:
+			tmp = -LinTable[depth][pos >> 2 & 0x0f];
+			break;
 		case 6:
 			tmp = ((pos & 0x3f) < 0x20) ? VibTable[depth][0x0f] : -VibTable[depth][0x0f];
 			break;
 		case 7:
+			lfsrreg[chan] = (((lfsrreg[chan] >> 16)^(lfsrreg[chan]>>2)) & 1) + (lfsrreg[chan] << 1);
+			tmp = ((lfsrreg[chan] & 0xff) - 0x80);
+			tmp = Mpyhw(depth + 1, tmp);
+			tmp = tmp >> 4;
+			break;
 		case 8:
 			tmp = ((pos & 0x3f) < 0x20) ? VibTable[depth][0x0f] : 0;
 			break;
@@ -88,10 +100,10 @@ short GetVibVal(uint8_t chan) {
 			tmp = ((pos & 0x3f) < 0x20) ? -VibTable[depth][0x0f] : 0;
 			break;
 		case 10:
-			tmp = ((pos & 0x3f) < 0x20) ? VibTable[depth][(pos & 0x1f) > 1] : VibTable[depth][0xf - ((pos & 0x1f) > 1)];
+			tmp = ((pos >> 1 & 0x1f) < 0x10) ? VibTable[depth][pos >> 1 & 0x0f] : VibTable[depth][0xf - (pos >> 1 & 0xf)];
 			break;
 		case 11:
-			tmp = ((pos & 0x3f) < 0x20) ? -VibTable[depth][(pos & 0x1f) > 1] : -VibTable[depth][0xf - ((pos & 0x1f) > 1)];
+			tmp = ((pos >> 1 & 0x1f) < 0x10) ? -VibTable[depth][pos >> 1 & 0x0f] : -VibTable[depth][0xf - (pos >> 1 & 0xf)];
 			break;
 		default:
 			tmp = ((pos & 0x1f) < 0x10) ? VibTable[depth][pos & 0x0f] : VibTable[depth][0xf - (pos & 0xf)];
@@ -131,7 +143,8 @@ void FCSChannelPost(uint8_t chan) {
 	// Write to volume register
 	tmp = SND_REGS_WRAM[chan].SxEV0;
 	//ChanRegBase[o_S1EV0] = ChState[chan].keyOff ? (tmp & 0xf) : (tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
-	SND_REGS[chan].SxEV0 = (ChState[chan].keyOff || !ChState[chan].keyOn) ? (tmp & 0xf) : ((tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0));
+	SND_REGS_WRAM[chan].SxEV0 = (ChState[chan].keyOff || !ChState[chan].keyOn) ? (tmp & 0xf) : ((tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0));
+	SND_REGS[chan].SxEV0 = SND_REGS_WRAM[chan].SxEV0;
 	// Pitch (note, vibrato, arp, and portamento) next
 	uint16_t regvalue = 0;
 
@@ -171,8 +184,10 @@ void FCSChannelPost(uint8_t chan) {
 		SND_REGS[chan].SxFQH = SND_REGS_WRAM[chan].SxFQH;
 	}
 	// Write to frequency registers
-	SND_REGS[chan].SxFQL = (uint8_t)(regvalue & 0xff);
-	SND_REGS[chan].SxFQH = (uint8_t)((regvalue >> 8) & 0x07);
+		SND_REGS_WRAM[chan].SxFQL = (uint8_t)(regvalue & 0xff);
+		SND_REGS_WRAM[chan].SxFQH = (uint8_t)((regvalue >> 8) & 0x07);
+		SND_REGS[chan].SxFQL = SND_REGS_WRAM[chan].SxFQL;
+		SND_REGS[chan].SxFQH = SND_REGS_WRAM[chan].SxFQH;
 
 	return;
 };

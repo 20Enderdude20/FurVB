@@ -113,10 +113,12 @@ bool CmdVibrato(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdVibRange(uint8_t chan, const uint8_t* param) {
+	ChState[chan].vibratoFine = param[1];
 	return false;
 };
 
 bool CmdVibShape(uint8_t chan, const uint8_t* param) {
+	ChState[chan].vibratoShape = param[1];
 	return false;
 };
 
@@ -137,6 +139,7 @@ bool CmdVolume(uint8_t chan, const uint8_t* param) {
 
 bool CmdVolSlide(uint8_t chan, const uint8_t* param) {
 	ChState[chan].volSpeed = param[1] | (param[2] << 8);
+	ChState[chan].volSpeedTarget = -1;
 	return false;
 };
 
@@ -178,6 +181,8 @@ bool CmdLegato(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdVolSlideWT(uint8_t chan, const uint8_t* param) {
+	ChState[chan].volSpeed = param[1] | (param[2] << 8);
+	ChState[chan].volSpeedTarget = param[3] | (param[4] << 8);
 	return false;
 };
 

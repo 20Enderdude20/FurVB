@@ -14,6 +14,8 @@ typedef struct {
 	uint32_t ChannelDataStack[MAX_STACKDEPTH];
 } ChannelDataRegisters;
 
+uint32_t lfsrreg[6]; // LFSR for noise generation
+
 typedef struct {
 	short note, oldNote, lastIns, pitch, portaSpeed, portaNote;
 	short volume, volSpeed, volSpeedTarget, cut, volCut, legatoDelay, legatoTarget, rowDelay, volMax;

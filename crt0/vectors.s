@@ -67,10 +67,9 @@
 
         .org 0x30
         /* Timer Interrupt - offset 0x30 */
-        push r30
-        movhi   hi(timer_interrupt), r0, r30
-        movea   lo(timer_interrupt), r30, r30
-        jmp [r30]
+        movhi   hi(timer_interrupt), r0, r1
+        movea   lo(timer_interrupt), r1, r1
+        jmp [r1]
 
         .org 0x40
         /* Expansion Port Interrupt - offset 0x40 */
@@ -96,9 +95,9 @@
         .org 0x210
 
 /* Reset Vector - offset 0x210 */
-        movhi   hi(Reset), r0, r30
-        movea   lo(Reset), r30, r30
-        jmp [r30]
+        movhi   hi(Reset), r0, r1
+        movea   lo(Reset), r1, r1
+        jmp [r1]
         nop  /* pad to 16 bytes total ROM size alignment */
         nop
         nop

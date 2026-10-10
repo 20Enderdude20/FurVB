@@ -86,10 +86,15 @@ void InitVSUIns() {
 
 
 	for (uint8_t chan = 0; chan < 6; chan++) { // Per-channel setup
-		SND_REGS[chan].SxEV0 = 0x00; // 0 volume, envelopes disabled
-		SND_REGS[chan].SxLRV = 0xff; // max left volume, max right volume
-		SND_REGS[chan].SxRAM = 0; // channels set to first wave in RAM
-		SND_REGS[chan].SxINT = 0x80; // channels are enabled to produce sound, no auto scheduled deactivation (not a thing in furnace)
+		SND_REGS_WRAM[chan].SxEV0 = 0x00; // 0 volume, envelopes disabled
+		SND_REGS_WRAM[chan].SxLRV = 0xff; // max left volume, max right volume
+		SND_REGS_WRAM[chan].SxRAM = 0; // channels set to first wave in RAM
+		SND_REGS_WRAM[chan].SxINT = 0x80; // channels are enabled to produce sound, no auto scheduled deactivation (not a thing in furnace)
+	   
+		SND_REGS[chan].SxEV0 = SND_REGS_WRAM[chan].SxEV0; // 0 volume, envelopes disabled
+		SND_REGS[chan].SxLRV = SND_REGS_WRAM[chan].SxLRV; // max left volume, max right volume
+		SND_REGS[chan].SxRAM = SND_REGS_WRAM[chan].SxRAM; // channels set to first wave in RAM
+		SND_REGS[chan].SxINT = SND_REGS_WRAM[chan].SxINT; // channels are enabled to produce sound, no auto scheduled deactivation (not a thing in furnace)
 	}
 	return;
 
