@@ -16,74 +16,77 @@ extern const uint8_t SongStream[];
 
 void InitVSUIns() {
 	SSTOP = 1;
-	// Load the default wave (saw)
-	uint32_t* wavptr32 = (uint32_t*)DefaultWave; // Unrolled to make wave loading as fast as possible
-	uint32_t tmp = wavptr32[0];
-	WAVEDATA1[0x0 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x1 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x2 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x3 << 2] = tmp;
-	tmp = wavptr32[1];
-	WAVEDATA1[0x4 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x5 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x6 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x7 << 2] = tmp;
-	tmp = wavptr32[2];
-	WAVEDATA1[0x8 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x9 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0xa << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0xb << 2] = tmp;
-	tmp = wavptr32[3];
-	WAVEDATA1[0xc << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0xd << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0xe << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0xf << 2] = tmp;
+	// Load the default waves (saw and square)
+	uint32_t* wavptr32 = NULL;
+	for (uint8_t i = 0; i < 2; i++)
+	{ if (i == 0) {wavptr32 = (uint32_t*)SawWave;} // Unrolled to make wave loading as fast as possible
+		else {wavptr32 = (uint32_t*)SquareWave;}
+		uint32_t tmp = wavptr32[0];
+		WAVEDATA1[(0x0 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x1 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x2 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x3 << 2) + (i << 7)] = tmp;
+		tmp = wavptr32[1];
+		WAVEDATA1[(0x4 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x5 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x6 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x7 << 2) + (i << 7)] = tmp;
+		tmp = wavptr32[2];
+		WAVEDATA1[(0x8 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x9 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0xa << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0xb << 2) + (i << 7)] = tmp;
+		tmp = wavptr32[3];
+		WAVEDATA1[(0xc << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0xd << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0xe << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0xf << 2) + (i << 7)] = tmp;
 
-	tmp = wavptr32[4];
-	WAVEDATA1[0x10 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x11 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x12 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x13 << 2] = tmp;
-	tmp = wavptr32[5];
-	WAVEDATA1[0x14 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x15 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x16 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x17 << 2] = tmp;
-	tmp = wavptr32[6];
-	WAVEDATA1[0x18 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x19 << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x1a << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x1b << 2] = tmp;
-	tmp = wavptr32[7];
-	WAVEDATA1[0x1c << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x1d << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x1e << 2] = tmp;
-	tmp >>= 8;
-	WAVEDATA1[0x1f << 2] = tmp;
-
+		tmp = wavptr32[4];
+		WAVEDATA1[(0x10 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x11 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x12 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x13 << 2) + (i << 7)] = tmp;
+		tmp = wavptr32[5];
+		WAVEDATA1[(0x14 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x15 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x16 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x17 << 2) + (i << 7)] = tmp;
+		tmp = wavptr32[6];
+		WAVEDATA1[(0x18 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x19 << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x1a << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x1b << 2) + (i << 7)] = tmp;
+		tmp = wavptr32[7];
+		WAVEDATA1[(0x1c << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x1d << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x1e << 2) + (i << 7)] = tmp;
+		tmp >>= 8;
+		WAVEDATA1[(0x1f << 2) + (i << 7)] = tmp;
+	}
 
 	for (uint8_t chan = 0; chan < 6; chan++) { // Per-channel setup
 		SND_REGS_WRAM[chan].SxEV0 = 0x00; // 0 volume, envelopes disabled
@@ -178,8 +181,8 @@ void Reset() {
 
 	// Setup the timer
 
-	*(volatile uint8_t*)(TIMER_TLR) = TIMER_20u_60Hz & 0xff;
-	*(volatile uint8_t*)(TIMER_THR) = TIMER_20u_60Hz >> 8;
+	*(volatile uint8_t*)(TIMER_TLR) = TIMER_20u_50Hz & 0xff;
+	*(volatile uint8_t*)(TIMER_THR) = TIMER_20u_50Hz >> 8;
 	*(volatile uint8_t*)(TIMER_TCR) = TIMER_CLKSEL | TIMER_ZINT | TIMER_STATCLR | TIMER_TENB; // 20 us
 	main();
 	return;

@@ -36,6 +36,8 @@ bool CmdNoiseLength(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdWaveform(uint8_t chan, const uint8_t* param) {
+	SND_REGS_WRAM[chan].SxRAM = param[1];
+	SND_REGS[chan].SxRAM = SND_REGS_WRAM[chan].SxRAM;
 	return false; 
 };
 

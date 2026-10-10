@@ -10,12 +10,12 @@
 
 
 bool LinearPitch = false;
-//#define REGPRINT
+#define REGPRINT
 
 uint16_t deltatime;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "streams/works.bin"
+	#embed "streams/tc.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
@@ -114,7 +114,7 @@ void __attribute__((interrupt)) timer_interrupt() {
 	#ifdef REGPRINT
 		pchannelstats();
 	#endif
-	deltatime = TIMER_20u_60Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
+	deltatime = TIMER_20u_50Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
 	return;
 }
 
