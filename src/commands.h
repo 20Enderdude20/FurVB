@@ -69,7 +69,10 @@ const uint8_t FullCmdLengths[] = { // Starting at full command 0x3e
 };
 // Normal commands
 bool CmdEvalNote(uint8_t chan, const uint8_t* param) {
-	ChState[chan].baseFreq = param[0] << 7;
+	if (!LinearPitch)
+		ChState[chan].note = param[0];
+	else
+		ChState[chan].baseFreq = param[0] << 7;
 	ChState[chan].portaTemp = 0;
 	ChState[chan].keyOn = true;
 	ChState[chan].keyOff = false;
@@ -95,7 +98,7 @@ bool CmdSetIns(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPrePorta(uint8_t chan, const uint8_t* param) {
-
+	ChState[chan].inPorta = param[1] & 0x80;
 	return false;
 };
 
@@ -181,7 +184,7 @@ bool CmdPorta(uint8_t chan, const uint8_t* param) {
 		else
 				{
 			if (2048 - (GetNoteRegVal(ChState[chan].portaNote >> 7, NoteTable, OctaveTable, SubTable) ) 
-			> (SND_REGS_WRAM[chan].SxFQL + (SND_REGS_WRAM[chan].SxFQH << 8)))
+			> (2048 - ChState[chan].baseFreq))
 			{
 				ChState[chan].portaSign = false; // positive frequency sweep
 				ChState[chan].portaSpeed = param[2];
@@ -199,7 +202,10 @@ bool CmdPorta(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdLegato(uint8_t chan, const uint8_t* param) {
-	ChState[chan].baseFreq = param[1] << 7;
+	if (!LinearPitch)
+		ChState[chan].note = param[1];
+	else
+		ChState[chan].baseFreq = param[1] << 7;
 	return false;
 };
 

@@ -182,9 +182,10 @@ void FCSChannelPost(uint8_t chan) {
 		if(ChState[chan].inPorta){
 			if(ChState[chan].portaSign == (ChState[chan].baseFreq > ChState[chan].portaNote))
 				ChState[chan].baseFreq -= ChState[chan].portaSpeed;
-			else
-
+			else{
 				ChState[chan].inPorta = false;
+				ChState[chan].note = ChState[chan].portaNote >> 7;
+				}
 		}
 		else
 			ChState[chan].baseFreq = GetNoteRegVal(ChState[chan].note + tmp, NoteTable, OctaveTable, SubTable);
