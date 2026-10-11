@@ -100,6 +100,7 @@ bool CmdPrePorta(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdArpSpeed(uint8_t chan, const uint8_t* param) {
+	ChState[chan].arpTicks = param[1];
 	return false;
 };
 
@@ -131,6 +132,11 @@ bool CmdPitch(uint8_t chan, const uint8_t* param) {
 
 bool CmdArpeggio(uint8_t chan, const uint8_t* param) {
 	ChState[chan].arp = param[1];
+	if (ChState[chan].arp == 0)
+		ChState[chan].arpStage = -1;
+	else if ((char)ChState[chan].arpStage == -1 && ChState[chan].arp != 0){
+		ChState[chan].arpPos = 0;
+		ChState[chan].arpStage = 0;}
 	return false;
 };
 
@@ -149,6 +155,18 @@ bool CmdPorta(uint8_t chan, const uint8_t* param) {
 	ChState[chan].portaNote = param[1] << 7; // Target
 	if (LinearPitch)
 		{
+			if((char)ChState[chan].arpStage != -1){
+				ChState[chan].arpPos -= 1;
+				if (ChState[chan].arpPos >= ChState[chan].arpTicks - 1) {
+					ChState[chan].arpPos = 2;
+					ChState[chan].arpStage -= 1;
+					if (ChState[chan].arpStage > 2)
+						ChState[chan].arpStage = 2;
+				}
+			ChState[chan].baseFreq += (((ChState[chan].arp << ((ChState[chan].arpStage - 1) * 4)) & 0xf0) >> 4)<<7;
+			}
+
+
 			if (ChState[chan].portaNote > ChState[chan].baseFreq)
 			{
 				ChState[chan].portaSign = false; // positive frequency sweep
@@ -174,11 +192,14 @@ bool CmdPorta(uint8_t chan, const uint8_t* param) {
 				ChState[chan].portaSpeed = -param[2];
 			}
 		}
-	ChState[chan].inPorta = true;
+	ChState[chan].inPorta = ChState[chan].portaSpeed != 0;
+	ChState[chan].arpPos = 1;
+	ChState[chan].arpStage = 0;
 	return false;
 };
 
 bool CmdLegato(uint8_t chan, const uint8_t* param) {
+	ChState[chan].baseFreq = param[1] << 7;
 	return false;
 };
 

@@ -147,12 +147,26 @@ void FCSChannelPost(uint8_t chan) {
 	SND_REGS[chan].SxEV0 = SND_REGS_WRAM[chan].SxEV0;
 	// Pitch (note, vibrato, arp, and portamento) next
 	uint16_t regvalue = 0;
-
+	tmp = 0;
+	if (!ChState[chan].inPorta)
+		tmp = ChState[chan].arpStage <= 0 ? 0 : ((ChState[chan].arp << ((ChState[chan].arpStage - 1) * 4)) & 0xf0) >> 4;
+	if ((char)ChState[chan].arpStage != -1) {
+		ChState[chan].arpPos += 1;
+		if (ChState[chan].arpPos >= ChState[chan].arpTicks) {
+			ChState[chan].arpPos = 0;
+			ChState[chan].arpStage += 1;
+			if (ChState[chan].arpStage > 2)
+				ChState[chan].arpStage = 0;
+		}
+	}
+	
 	if (ChState[chan].vibratoRate != 0) {
 		ChState[chan].vibratoPos = (ChState[chan].vibratoPos + ChState[chan].vibratoRate) & 0x3f;
 	}
 	if (LinearPitch){
 		if(ChState[chan].inPorta){
+			ChState[chan].arpPos = 0;
+			ChState[chan].arpStage = 0;
 			if(ChState[chan].portaSign == (ChState[chan].baseFreq + ChState[chan].portaSpeed > ChState[chan].portaNote))
 				ChState[chan].baseFreq += ChState[chan].portaSpeed;
 			else
@@ -161,7 +175,7 @@ void FCSChannelPost(uint8_t chan) {
 				ChState[chan].inPorta = false;
 			}
 		}
-		regvalue = LinearFreqInterpolate(ChState[chan].baseFreq, ChState[chan].pitch, GetVibVal(chan), 0, false, NoteTable);
+		regvalue = LinearFreqInterpolate(ChState[chan].baseFreq, ChState[chan].pitch, GetVibVal(chan), (uint16_t)(tmp) << 7, false, NoteTable);
 	}
 
 	else {
@@ -173,7 +187,7 @@ void FCSChannelPost(uint8_t chan) {
 				ChState[chan].inPorta = false;
 		}
 		else
-			ChState[chan].baseFreq = GetNoteRegVal(ChState[chan].note, NoteTable, OctaveTable, SubTable);
+			ChState[chan].baseFreq = GetNoteRegVal(ChState[chan].note + tmp, NoteTable, OctaveTable, SubTable);
 		regvalue = ChState[chan].baseFreq - ChState[chan].pitch - GetVibVal(chan);
 		regvalue = ((short)regvalue <= 0) ? 1 : regvalue;
 		regvalue = ((short)regvalue > 2047) ? 1 : 2048 - regvalue;

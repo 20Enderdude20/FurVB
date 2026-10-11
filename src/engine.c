@@ -15,7 +15,7 @@ bool LinearPitch = false;
 uint16_t deltatime;
 
 _Alignas(4) const uint8_t SongStream[] = { // Needs to align for casting
-	#embed "streams/tc.bin"
+	#embed "streams/arpmelody.bin"
 };
 
  bool FCSPtrSize = false; // False is short (< 64KiB), true is long (> 64KiB)
@@ -100,8 +100,7 @@ void FCSReadCommandStreams(const uint8_t* binfile) {
 
 int main() {
 	while (true) {
-
-		// speeeeeeeeeeeeeen
+		HALT();
 	}
 	return 0;
 }

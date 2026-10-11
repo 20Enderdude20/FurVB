@@ -24,7 +24,7 @@ typedef struct {
 	short vibratoDepth, vibratoRate, vibratoPos, vibratoShape, vibratoFine;
 	short tremoloDepth, tremoloRate, tremoloPos;
 	short panDepth, panRate, panPos, panSpeed;
-	uint8_t arp, arpStage, arpTicks, panL, panR, panRL, panRR, lastVibrato, lastPorta, cutType;
+	uint8_t arp, arpPos, arpStage, arpTicks, panL, panR, panRL, panRR, lastVibrato, lastPorta, cutType;
 	bool doNote, legato, portaStop, keyOn, keyOff, stopOnOff, releasing;
 	bool arpYield, delayLocked, inPorta, scheduledSlideReset, shorthandPorta, wasShorthandPorta, noteOnInhibit, resetArp, sampleOffSet;
 	bool wentThroughNote, goneThroughNote;
@@ -60,6 +60,7 @@ void ChannelState_Init(ChannelState* ch_s) {
 	ch_s->panPos = 0;
 	ch_s->panSpeed = 0;
 	ch_s->arp = 0;
+	ch_s->arpPos = 0;
 	ch_s->arpStage = -1;
 	ch_s->arpTicks = 1;
 	ch_s->panL = 255;

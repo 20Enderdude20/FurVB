@@ -10,3 +10,5 @@ inline int32_t Mpyhw(int32_t h, int32_t w) { // Thanks, pizzarollsroyce!
 
 #define ENABLE_IRQS()  __asm__ volatile ("cli" ::: "memory")
 #define DISABLE_IRQS()  __asm__ volatile ("sei" ::: "memory")
+
+#define HALT()  __asm__ volatile("halt" ::: "memory");
