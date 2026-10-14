@@ -25,7 +25,7 @@ uint16_t GetNoteRegVal(uint8_t note, const uint16_t* N_Tbl, const uint8_t* O_Tbl
 
 	return (uint16_t)regval;
 }
-uint16_t LinearFreqInterpolate(uint16_t basenote, short pitch1, short pitch2, short arp, bool Arpfixed, uint16_t* N_Tbl) {
+uint16_t LinearFreqInterpolate(uint16_t basenote, short pitch1, short pitch2, short arp, bool Arpfixed, const uint16_t* N_Tbl) {
 	uint16_t nbase = basenote + pitch1 + pitch2;
 	uint16_t nupper;
 	uint16_t rdelta = 0;
@@ -126,8 +126,8 @@ void FCSChannelPost(uint8_t chan) {
 	if (ChState[chan].volSpeed != 0) {
 		int16_t vol = ChState[chan].volume + ChState[chan].volSpeed;
 		if (ChState[chan].volSpeedTarget != -1) {
-			if ((vol >= ChState[chan].volSpeedTarget) && (ChState[chan].volSpeed > 0)
-				|| (vol <= ChState[chan].volSpeedTarget) && (ChState[chan].volSpeed < 0)) {
+			if (((vol >= ChState[chan].volSpeedTarget) && (ChState[chan].volSpeed > 0))
+				|| ((vol <= ChState[chan].volSpeedTarget) && (ChState[chan].volSpeed < 0))) {
 				vol = ChState[chan].volSpeedTarget;
 				ChState[chan].volSpeed = 0;
 			}
@@ -145,6 +145,11 @@ void FCSChannelPost(uint8_t chan) {
 	//ChanRegBase[o_S1EV0] = ChState[chan].keyOff ? (tmp & 0xf) : (tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0);
 	SND_REGS_WRAM[chan].SxEV0 = (ChState[chan].keyOff || !ChState[chan].keyOn) ? (tmp & 0xf) : ((tmp & 0xf) | ((ChState[chan].volume >> 4) & 0xf0));
 	SND_REGS[chan].SxEV0 = SND_REGS_WRAM[chan].SxEV0;
+	// Panning next
+	SND_REGS_WRAM[chan].SxLRV = (ChState[chan].panL & 0xf0) | ((ChState[chan].panR & 0xf0) >> 4);
+	SND_REGS[chan].SxLRV = SND_REGS_WRAM[chan].SxLRV;
+
+
 	// Pitch (note, vibrato, arp, and portamento) next
 	uint16_t regvalue = 0;
 	tmp = 0;

@@ -30,6 +30,7 @@ bool CmdSetupEnv(uint8_t chan, const uint8_t* param) {
 
 bool CmdNoiseLength(uint8_t chan, const uint8_t* param) {
 	 //channel 6 (noise)
+	(void)chan; //unused
 	SND_REGS_WRAM[5].SxEV1 |= (param[1] & 0x7) << 4;
 	SND_REGS[5].SxEV1 = SND_REGS_WRAM[5].SxEV1;
 	return false; 
@@ -94,6 +95,7 @@ bool CmdEnvRel(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdSetIns(uint8_t chan, const uint8_t* param) {
+	ChState[chan].lastIns = param[1];
 	return false;
 };
 
@@ -220,14 +222,21 @@ bool CmdTremolo(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPanbrello(uint8_t chan, const uint8_t* param) {
+	ChState[chan].panDepth = param[1] & 0xf;
+	ChState[chan].panRate = (param[1] & 0xf0) >> 4;
+	if (param[1] == 0)
+		ChState[chan].panPos = 0;
 	return false;
 };
 
 bool CmdPanSlide(uint8_t chan, const uint8_t* param) {
+	ChState[chan].panSpeed = (param[1] & 0xf) ? (param[1] & 0xf) : -(param[1] >> 4);
 	return false;
 };
 
 bool CmdPanning(uint8_t chan, const uint8_t* param) {
+	ChState[chan].panL = param[1];
+	ChState[chan].panR = param[2];
 	return false;
 };
 
@@ -289,12 +298,15 @@ bool CmdWait(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdStop(uint8_t chan, const uint8_t* param) {
+	(void)chan; //unused
+	(void)param;
 	SSTOP = 1;
 	FCSEngineStatus |= 2;
 	return true;
 };
 
 bool CmdPIns(uint8_t chan, const uint8_t* param) {
+	ChState[chan].lastIns = PresetInstrument[param[0] - 0xe0];
 	return false;
 };
 
