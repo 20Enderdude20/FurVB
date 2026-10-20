@@ -25,12 +25,17 @@ typedef bool (*CommandFunc)(uint8_t chan, const uint8_t* param);
 
  // Full commands first for use in CmdFull
 bool CmdSetupEnv(uint8_t chan, const uint8_t* param) {
+	SND_REGS_WRAM[chan].SxEV0 |= param[1] & 0xf; 
+	SND_REGS_WRAM[chan].SxEV1 = (SND_REGS_WRAM[chan].SxEV1 & ~0x3) | ((param[1] & 0x30) >> 4);
+	SND_REGS[chan].SxEV0 = SND_REGS_WRAM[chan].SxEV0;
+	SND_REGS[chan].SxEV1 = SND_REGS_WRAM[chan].SxEV1;
 	return false; // Boolean tells us if the loop these are used in should be done yet
 };
 
 bool CmdNoiseLength(uint8_t chan, const uint8_t* param) {
 	 //channel 6 (noise)
-	(void)chan; //unused
+	if (chan != 5) return false;
+	SND_REGS_WRAM[5].SxEV1 &= ~0x70;
 	SND_REGS_WRAM[5].SxEV1 |= (param[1] & 0x7) << 4;
 	SND_REGS[5].SxEV1 = SND_REGS_WRAM[5].SxEV1;
 	return false; 
@@ -43,10 +48,27 @@ bool CmdWaveform(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdSetupSweep(uint8_t chan, const uint8_t* param) {
+	if (chan != 4) return false;
+	SND_REGS_WRAM[4].SxEV1 = SND_REGS_WRAM[4].SxEV1 & ~0x40;
+	if (param[1] !=0) {
+		SND_REGS_WRAM[4].SxEV1 |= 0x40;
+		SND_REGS_WRAM[4].SxEV1 &= ~0x10;
+	}
+	SND_REGS_WRAM[4].S5SWP = (SND_REGS_WRAM[4].S5SWP & ~0x77) | (param[1] & 0x77);
+	SND_REGS[4].S5SWP = SND_REGS_WRAM[4].S5SWP;
+	SND_REGS[4].SxEV1 = SND_REGS_WRAM[4].SxEV1;
 	return false; 
 };
 
+
 bool CmdSetupMod(uint8_t chan, const uint8_t* param) {
+	if (chan != 4) return false;
+	SND_REGS_WRAM[4].SxEV1 &= ~0x60;
+	SND_REGS_WRAM[4].SxEV1 |= ((param[1] & 0x30) << 1) + 0x10;
+	SND_REGS_WRAM[4].S5SWP &= ~0xf0;
+	SND_REGS_WRAM[4].S5SWP |= (param[1] & 0xf) << 4;
+	SND_REGS[4].S5SWP = SND_REGS_WRAM[4].S5SWP;
+	SND_REGS[4].SxEV1 = SND_REGS_WRAM[4].SxEV1;
 	return false;
 };
 
@@ -81,16 +103,23 @@ bool CmdEvalNote(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdNoteOff(uint8_t chan, const uint8_t* param) {
+	(void)param;
 	ChState[chan].keyOn = false;
 	ChState[chan].keyOff = true;
 	return false;
 };
 
 bool CmdNoteOffEnv(uint8_t chan, const uint8_t* param) {
+	(void)param;
+	ChState[chan].releasing = true;
+	ChState[chan].keyOn = false;
+	ChState[chan].keyOff = true;
 	return false;
 };
 
 bool CmdEnvRel(uint8_t chan, const uint8_t* param) {
+	(void)param;
+	ChState[chan].releasing = true;
 	return false;
 };
 
@@ -100,7 +129,9 @@ bool CmdSetIns(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdPrePorta(uint8_t chan, const uint8_t* param) {
-	ChState[chan].inPorta = param[1] & 0x80;
+	(void)param;
+	(void)chan;
+	//ChState[chan].inPorta = param[1] & 0x80;
 	return false;
 };
 
@@ -218,6 +249,12 @@ bool CmdVolSlideWT(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdTremolo(uint8_t chan, const uint8_t* param) {
+	ChState[chan].tremoloDepth = (param[1] & 0xf);
+	ChState[chan].tremoloRate = (param[1] & 0xf0) >> 4;
+	if (param[1] == 0)
+		ChState[chan].tremoloPos = 0;
+	else
+		ChState[chan].volSpeed = 0;
 	return false;
 };
 
@@ -248,6 +285,7 @@ bool CmdCall32(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdOffWait(uint8_t chan, const uint8_t* param) {
+	(void)param;
 	ChState[chan].keyOn = false;
 	ChState[chan].keyOff = true;
 	return true;
@@ -265,6 +303,7 @@ bool CmdCall16(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdReturn(uint8_t chan, const uint8_t* param) {
+	(void)param;
 	ChDataReg[chan].PC = ChDataReg[chan].ChannelDataStack[ChDataReg[chan].ChannelStackPtr];
 	ChDataReg[chan].ChannelStackPtr -= 1;
 	return false;
@@ -293,6 +332,7 @@ bool CmdWait8(uint8_t chan, const uint8_t* param) {
 };
 
 bool CmdWait(uint8_t chan, const uint8_t* param) {
+	(void)param;
 	ChState[chan].wait = 1;
 	return true;
 };

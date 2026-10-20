@@ -113,7 +113,7 @@ void __attribute__((interrupt)) timer_interrupt() {
 	#ifdef REGPRINT
 		pchannelstats();
 	#endif
-	deltatime = TIMER_20u_60Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
+	deltatime = TIMER_20u_50Hz - (*(volatile uint8_t*)(TIMER_TLR) + (*(volatile uint8_t*)(TIMER_THR) << 8));
 	return;
 }
 
